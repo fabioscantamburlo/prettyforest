@@ -223,3 +223,9 @@ __marimo__/
 
 # Temporary files
 tmp/
+
+# CatBoost training artifacts
+catboost_info/
+
+# macOS
+.DS_Store
