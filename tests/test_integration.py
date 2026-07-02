@@ -1,4 +1,4 @@
-"""End-to-end integration tests."""
+"""End-to-end integration tests for forest visualization."""
 
 import tempfile
 from pathlib import Path
@@ -21,8 +21,8 @@ def cls_data():
     return X, y
 
 
-class TestSklearnEndToEnd:
-    def test_blueprint_single_tree(self, cls_data):
+class TestForestVisualization:
+    def test_single_tree(self, cls_data):
         X, y = cls_data
         model = DecisionTreeClassifier(max_depth=3, random_state=42)
         model.fit(X, y)
@@ -30,60 +30,79 @@ class TestSklearnEndToEnd:
         html = visualize(model)
         assert isinstance(html, str)
         assert "<svg" in html
-        assert "<!DOCTYPE html>" in html
+        assert "forest-svg" in html
 
-    def test_flow_single_tree(self, cls_data):
-        X, y = cls_data
-        model = DecisionTreeClassifier(max_depth=3, random_state=42)
-        model.fit(X, y)
-        df = pl.DataFrame({f"feature_{i}": X[:, i] for i in range(4)})
-        target = pl.Series("target", y)
-
-        html = visualize(model, data=df, target=target, mode="flow")
-        assert "n=50" in html
-        assert 'class="pie-chart"' in html
-
-    def test_ensemble_random_forest(self, cls_data):
+    def test_random_forest(self, cls_data):
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=5, max_depth=3, random_state=42)
         model.fit(X, y)
 
         html = visualize(model)
-        assert "Tree 0" in html
-        assert "Tree 4" in html
-        assert "tree-selector" in html
+        assert "visual-tree" in html
+        assert "forest-svg" in html
 
-    def test_ensemble_flow_mode(self, cls_data):
+    def test_gradient_boosting(self, cls_data):
+        X, y = cls_data
+        model = GradientBoostingClassifier(n_estimators=5, max_depth=3, random_state=42)
+        model.fit(X, y)
+
+        html = visualize(model)
+        assert "visual-tree" in html
+
+    def test_with_data_adds_predict_panel(self, cls_data):
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
         df = pl.DataFrame({f"feature_{i}": X[:, i] for i in range(4)})
-        target = pl.Series("target", y)
 
-        html = visualize(model, data=df, target=target, mode="flow")
-        assert "Ensemble Vote" in html
+        html = visualize(model, data=df)
+        assert "predict-panel" in html
+        assert "predict-data" in html
+
+    def test_without_data_no_predict_panel(self, cls_data):
+        X, y = cls_data
+        model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
+        model.fit(X, y)
+
+        html = visualize(model)
+        # The panel div should not be present (JS still references it but handles null)
+        assert 'id="predict-panel"' not in html
+
+    def test_numpy_data_input(self, cls_data):
+        X, y = cls_data
+        model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
+        model.fit(X, y)
+
+        html = visualize(model, data=X, feature_names=[f"f{i}" for i in range(4)])
+        assert "predict-panel" in html
+
+    def test_tree_structures_always_embedded(self, cls_data):
+        X, y = cls_data
+        model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
+        model.fit(X, y)
+
+        html = visualize(model)
+        assert "trees-data" in html
 
 
-class TestLightGBMEndToEnd:
-    def test_blueprint(self, cls_data):
+class TestLightGBM:
+    def test_renders(self, cls_data):
         X, y = cls_data
         model = LGBMClassifier(n_estimators=3, max_depth=3, verbose=-1)
         model.fit(X, y)
 
         html = visualize(model)
-        assert "<svg" in html
-        assert "Tree 0" in html
+        assert "visual-tree" in html
 
 
-class TestCatBoostEndToEnd:
-    def test_blueprint(self, cls_data):
+class TestCatBoost:
+    def test_renders(self, cls_data):
         X, y = cls_data
         model = CatBoostClassifier(iterations=3, depth=3, verbose=0)
         model.fit(X, y)
 
         html = visualize(model)
-        assert "<svg" in html
-        assert "Tree 0" in html
+        assert "visual-tree" in html
 
 
 class TestOutputHandling:
@@ -117,29 +136,3 @@ class TestOutputHandling:
         html = visualize(model)
         assert isinstance(html, str)
         assert len(html) > 100
-
-    def test_numpy_data_input(self, cls_data):
-        X, y = cls_data
-        model = DecisionTreeClassifier(max_depth=3, random_state=42)
-        model.fit(X, y)
-
-        html = visualize(
-            model,
-            data=X,
-            target=np.array(y),
-            mode="flow",
-            feature_names=[f"feature_{i}" for i in range(4)],
-        )
-        assert "n=50" in html
-
-
-class TestSingleTreeFromEnsemble:
-    def test_tree_index_renders_single(self, cls_data):
-        X, y = cls_data
-        model = RandomForestClassifier(n_estimators=5, max_depth=3, random_state=42)
-        model.fit(X, y)
-
-        html = visualize(model, tree_index=2)
-        # Single tree view — no ensemble navigation
-        assert "tree-selector" not in html
-        assert "<svg" in html

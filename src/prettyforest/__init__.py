@@ -1,30 +1,5 @@
-"""PrettyForest — Interactive decision tree visualizer for ML models."""
+"""PrettyForest — Interactive forest visualizer for ML ensemble models."""
 
 from prettyforest.api import visualize
-from prettyforest.models import (
-    ComparisonOp,
-    EnsembleMeta,
-    EnsembleType,
-    FlowResult,
-    LeafDistribution,
-    NodePosition,
-    PathStep,
-    UnifiedNode,
-    UnifiedTree,
-)
-from prettyforest.serialization import deserialize, serialize
 
-__all__ = [
-    "visualize",
-    "serialize",
-    "deserialize",
-    "ComparisonOp",
-    "EnsembleMeta",
-    "EnsembleType",
-    "FlowResult",
-    "LeafDistribution",
-    "NodePosition",
-    "PathStep",
-    "UnifiedNode",
-    "UnifiedTree",
-]
+__all__ = ["visualize"]

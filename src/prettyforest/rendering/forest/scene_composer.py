@@ -102,6 +102,8 @@ class SceneComposer:
         return "\n".join(parts)
 
     def _compute_scene_size(self, n: int) -> tuple[int, int]:
+        if n <= 1:
+            return 400, 400
         base_w, base_h = 900, 600
         factor = max(1.0, math.sqrt(n / 25))
         return int(base_w * factor), int(base_h * min(factor, 2.0))

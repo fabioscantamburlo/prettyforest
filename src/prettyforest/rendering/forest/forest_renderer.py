@@ -23,6 +23,8 @@ class ForestRenderer:
         config: ForestConfig = ForestConfig(),
         ensemble_type: EnsembleType = EnsembleType.SINGLE,
         data=None,
+        boosting_meta: dict | None = None,
+        target: list | None = None,
     ) -> str:
         rng = random.Random(config.seed)
         total_count = len(trees)
@@ -37,7 +39,7 @@ class ForestRenderer:
         # Build prediction data if data was provided
         predict_json = ""
         if data is not None:
-            predict_json = self._build_predict_json(trees, data)
+            predict_json = self._build_predict_json(trees, data, ensemble_type, boosting_meta, target)
 
         # Always embed tree structures for detail view
         trees_json = self._build_trees_json(trees)
@@ -83,7 +85,7 @@ class ForestRenderer:
             leaf_magnitude=leaf_magnitude,
         )
 
-    def _build_predict_json(self, trees: list[UnifiedTree], data) -> str:
+    def _build_predict_json(self, trees: list[UnifiedTree], data, ensemble_type: EnsembleType = EnsembleType.SINGLE, boosting_meta: dict | None = None, target: list | None = None) -> str:
         """Build compact JSON with tree structures + sample rows for client-side prediction."""
         import json
         import polars as pl
@@ -120,13 +122,23 @@ class ForestRenderer:
 
         compact_trees = [serialize_node(tree.root) for tree in trees]
 
+        # Aggregation method: "avg" for vote-based, "sum" for additive
+        agg = "avg" if ensemble_type == EnsembleType.VOTE_BASED or ensemble_type == EnsembleType.SINGLE else "sum"
+
         payload = {
             "features": feature_names,
             "samples": rows,
             "n_rows": n_rows,
             "trees": compact_trees,
             "is_classifier": trees[0].is_classifier if trees else True,
+            "aggregation": agg,
         }
+        if boosting_meta:
+            payload["boosting"] = boosting_meta
+        if target is not None:
+            # Embed targets for the same rows we embedded
+            max_idx = min(n_rows, max_samples)
+            payload["targets"] = [target[i] if i < len(target) else None for i in range(max_idx)]
         return json.dumps(payload)
 
     def _build_trees_json(self, trees: list[UnifiedTree]) -> str:
@@ -177,6 +189,7 @@ class ForestRenderer:
             '<div class="header">\n',
             "<h2>PrettyForest</h2>\n",
             '<div class="zoom-controls">\n',
+            '<button id="dark-toggle" title="Toggle dark mode">🌙</button>\n',
             '<button id="zoom-in" title="Zoom In">+</button>\n',
             '<button id="zoom-reset" title="Reset Zoom">⟳</button>\n',
             '<button id="zoom-out" title="Zoom Out">−</button>\n',
@@ -251,6 +264,7 @@ class ForestRenderer:
         # Detail modal (rendered on the fly via JS)
         parts.append('<div class="detail-modal" id="detail-modal">\n')
         parts.append('<div class="detail-header"><span id="detail-title">Tree #0</span><button id="detail-close">✕</button></div>\n')
+        parts.append('<div class="detail-sample" id="detail-sample"></div>\n')
         parts.append('<div class="detail-body" id="detail-body"></div>\n')
         parts.append('</div>\n')
 
@@ -295,7 +309,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .forest-container svg { display: block; width: 100%; height: 100%; cursor: grab; transition: transform 0.15s ease; }
 .forest-container svg:active { cursor: grabbing; }
 .tooltip { position: fixed; display: none; background: rgba(20,20,20,0.92); color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 12px; line-height: 1.7; pointer-events: none; z-index: 1000; max-width: 240px; box-shadow: 0 6px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
-.visual-tree { cursor: pointer; transition: opacity 0.3s, filter 0.3s; }
+.visual-tree { cursor: pointer; transition: opacity 0.3s, filter 0.3s, transform 0.6s ease; }
 .visual-tree:hover { filter: brightness(1.1); }
 .visual-tree.hidden { display: none; }
 .visual-tree.highlighted { filter: drop-shadow(0 0 6px #ffeb3b) drop-shadow(0 0 12px rgba(255,235,59,0.5)); }
@@ -348,6 +362,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .sample-display .chip { background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px; padding: 3px 8px; font-size: 10px; white-space: nowrap; flex-shrink: 0; }
 .sample-display .chip .chip-name { color: #666; }
 .sample-display .chip .chip-val { color: #1565c0; font-weight: 600; margin-left: 3px; }
+.detail-sample { padding: 6px 24px; background: #f1f8e9; border-bottom: 1px solid #c8e6c9; overflow-x: auto; white-space: nowrap; display: none; }
+.detail-sample.visible { display: block; }
+.detail-sample .sample-chips { display: flex; gap: 6px; }
+.detail-sample .chip { background: #fff; border: 1px solid #c8e6c9; border-radius: 4px; padding: 3px 8px; font-size: 10px; white-space: nowrap; flex-shrink: 0; }
+.detail-sample .chip .chip-name { color: #555; }
+.detail-sample .chip .chip-val { color: #1565c0; font-weight: 600; margin-left: 3px; }
+
+/* Dark mode */
+body.dark { background: #1a1a2e; color: #e0e0e0; }
+body.dark .header { background: rgba(30,30,50,0.97); border-color: #333; }
+body.dark .header h2 { color: #e0e0e0; }
+body.dark .toolbar { background: rgba(30,30,50,0.94); border-color: #333; }
+body.dark .toolbar label { color: #aaa; }
+body.dark .toolbar select { background: #2a2a4a; color: #ddd; border-color: #444; }
+body.dark .tool-btn { background: #2a2a4a; color: #ddd; border-color: #444; }
+body.dark .tool-btn:hover { background: #3a3a5a; border-color: #66bb6a; }
+body.dark #page-info { color: #ccc; }
+body.dark #zoom-level { color: #aaa; }
+body.dark .zoom-controls button { background: #2a2a4a; color: #ddd; border-color: #444; }
+body.dark .zoom-controls button:hover { background: #3a3a5a; }
+body.dark .predict-panel { background: rgba(30,30,50,0.94); border-color: #333; }
+body.dark .predict-panel label { color: #aaa; }
+body.dark .predict-panel input { background: #2a2a4a; color: #ddd; border-color: #444; }
+body.dark #predict-result { color: #ddd; }
+body.dark .sample-display { background: rgba(30,30,50,0.95); border-color: #333; }
+body.dark .sample-display .sample-title { color: #ddd; }
+body.dark .sample-display .chip { background: #2a2a4a; border-color: #444; }
+body.dark .sample-display .chip .chip-name { color: #aaa; }
+body.dark .tooltip { background: rgba(50,50,70,0.95); border-color: rgba(255,255,255,0.15); }
+body.dark .spotlight-panel { background: rgba(30,30,50,0.97); border-color: #444; color: #ddd; }
+body.dark .stat-row { border-color: #333; }
+body.dark .stat-label { color: #aaa; }
+body.dark .detail-modal { background: rgba(20,20,35,0.98); }
+body.dark .detail-header { background: linear-gradient(to right, #1a3a2a, #2a2a4a); border-color: #444; }
+body.dark .detail-header span { color: #81c784; }
+body.dark .detail-body { background: radial-gradient(ellipse at center, #1a2a1a 0%, #151520 100%); }
+body.dark .detail-sample { background: #1a3a2a; border-color: #2e5a3e; }
+body.dark .detail-sample .chip { background: #2a2a4a; border-color: #444; }
 """
 
 _JS = r"""
@@ -372,6 +424,7 @@ _JS = r"""
   if (!svg || !container) return;
 
   // --- Collect all tree elements and their data ---
+  var traceActive = false; // set to true when user clicks Trace, false on Clear
   var allTrees = Array.prototype.slice.call(svg.querySelectorAll('.visual-tree'));
   var treeData = allTrees.map(function(el) {
     return {
@@ -455,6 +508,15 @@ _JS = r"""
   zoomIn.addEventListener('click', function() { scale = Math.min(scale * 1.25, 5); applyZoom(); });
   zoomOut.addEventListener('click', function() { scale = Math.max(scale / 1.25, 0.2); applyZoom(); });
   zoomReset.addEventListener('click', function() { scale = 1; tx = 0; ty = 0; applyZoom(); });
+
+  // Dark mode toggle
+  var darkBtn = document.getElementById('dark-toggle');
+  if (darkBtn) {
+    darkBtn.addEventListener('click', function() {
+      document.body.classList.toggle('dark');
+      darkBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    });
+  }
   container.addEventListener('wheel', function(e) {
     e.preventDefault();
     scale = Math.max(0.2, Math.min(5, scale * (e.deltaY > 0 ? 0.9 : 1.1)));
@@ -641,16 +703,37 @@ _JS = r"""
 
       // Get traced sample if available
       var tracedSample = null;
-      var predDataEl = document.getElementById('predict-data');
-      var rowInput = document.getElementById('predict-row');
-      if (predDataEl && rowInput) {
-        try {
-          var pd = JSON.parse(predDataEl.textContent);
-          var idx = parseInt(rowInput.value);
-          if (pd.samples && idx >= 0 && idx < pd.samples.length) {
-            tracedSample = pd.samples[idx];
+      if (traceActive) {
+        var predDataEl = document.getElementById('predict-data');
+        var rowInput = document.getElementById('predict-row');
+        if (predDataEl && rowInput) {
+          try {
+            var pd = JSON.parse(predDataEl.textContent);
+            var idx = parseInt(rowInput.value);
+            if (pd.samples && idx >= 0 && idx < pd.samples.length) {
+              tracedSample = pd.samples[idx];
+            }
+          } catch(e) {}
+        }
+      }
+
+      // Show sample data in detail header
+      var detailSampleEl = document.getElementById('detail-sample');
+      if (detailSampleEl) {
+        if (tracedSample) {
+          var html = '<div class="sample-chips">';
+          for (var key in tracedSample) {
+            var val = tracedSample[key];
+            var display = (typeof val === 'number') ? val.toFixed(3) : String(val);
+            html += '<span class="chip"><span class="chip-name">' + key + ':</span><span class="chip-val">' + display + '</span></span>';
           }
-        } catch(e) {}
+          html += '</div>';
+          detailSampleEl.innerHTML = html;
+          detailSampleEl.classList.add('visible');
+        } else {
+          detailSampleEl.classList.remove('visible');
+          detailSampleEl.innerHTML = '';
+        }
       }
 
       detailSvg = renderTreeSVG(treeStruct, tracedSample);
@@ -715,175 +798,111 @@ _JS = r"""
       detailSvg.style.transformOrigin = 'center top';
     }
 
-    // --- Lightweight tree layout + SVG renderer ---
+    // --- Lightweight tree layout + SVG renderer (per-node expand) ---
     var NODE_W = 140, NODE_H = 50, H_GAP = 16, V_GAP = 60;
+    var INITIAL_DEPTH = 3;
+    var currentTreeStruct = null, currentSample = null;
+    var expandedNodes = {};
 
-    function computeLayout(node, depth) {
-      if (node.t === 'l') return { node: node, depth: depth, width: NODE_W, children: null };
-      var left = computeLayout(node.l, depth + 1);
-      var right = computeLayout(node.r, depth + 1);
-      var w = left.width + H_GAP + right.width;
-      return { node: node, depth: depth, width: Math.max(w, NODE_W), children: [left, right] };
+    function countNodes(node) {
+      if (!node || node.t === 'l') return 1;
+      return 1 + countNodes(node.l) + countNodes(node.r);
     }
 
-    function assignPositions(layout, cx, y, positions, nodeH) {
+    function computeLayout(node, depth, baseMax, path) {
+      if (node.t === 'l') return { node: node, depth: depth, width: NODE_W, children: null, truncated: 0, path: path };
+      var extra = expandedNodes[path] || 0;
+      if (depth >= baseMax + extra) {
+        return { node: node, depth: depth, width: NODE_W, children: null, truncated: countNodes(node) - 1, path: path };
+      }
+      var left = computeLayout(node.l, depth + 1, baseMax, path + '.l');
+      var right = computeLayout(node.r, depth + 1, baseMax, path + '.r');
+      var w = left.width + H_GAP + right.width;
+      return { node: node, depth: depth, width: Math.max(w, NODE_W), children: [left, right], truncated: 0, path: path };
+    }
+
+    function assignPos(layout, cx, y, positions, nodeH) {
       positions.push({ layout: layout, x: cx, y: y });
       if (!layout.children) return;
-      var left = layout.children[0], right = layout.children[1];
-      var totalW = left.width + H_GAP + right.width;
-      var leftCx = cx - totalW / 2 + left.width / 2;
-      var rightCx = cx + totalW / 2 - right.width / 2;
-      var childY = y + nodeH + V_GAP;
-      assignPositions(left, leftCx, childY, positions, nodeH);
-      assignPositions(right, rightCx, childY, positions, nodeH);
+      var totalW = layout.children[0].width + H_GAP + layout.children[1].width;
+      assignPos(layout.children[0], cx - totalW/2 + layout.children[0].width/2, y + nodeH + V_GAP, positions, nodeH);
+      assignPos(layout.children[1], cx + totalW/2 - layout.children[1].width/2, y + nodeH + V_GAP, positions, nodeH);
     }
 
-    function tracePath(node, sample) {
-      // Returns array of 'l' or 'r' decisions
+    function traceP(node, sample) {
       if (!sample || node.t === 'l') return [];
-      var fv = sample[node.f];
-      if (fv === undefined) return [];
-      var goLeft = false;
-      switch(node.op) {
-        case '<=': goLeft = fv <= node.th; break;
-        case '<': goLeft = fv < node.th; break;
-        case '>=': goLeft = fv >= node.th; break;
-        case '>': goLeft = fv > node.th; break;
-        case '==': goLeft = fv == node.th; break;
-        case '!=': goLeft = fv != node.th; break;
-        default: goLeft = fv <= node.th;
-      }
-      if (goLeft) return ['l'].concat(tracePath(node.l, sample));
-      else return ['r'].concat(tracePath(node.r, sample));
+      var fv = sample[node.f]; if (fv === undefined) return [];
+      var gl = (node.op==='<='?fv<=node.th:node.op==='<'?fv<node.th:node.op==='>='?fv>=node.th:node.op==='>'?fv>node.th:fv<=node.th);
+      return [gl?'l':'r'].concat(traceP(gl?node.l:node.r, sample));
     }
 
-    function getPathPositions(positions, treeStruct, sample) {
-      // Return set of position indices on the traced path
+    function getPS(positions, ts, sample) {
       if (!sample) return new Set();
-      var path = tracePath(treeStruct, sample);
-      var onPath = new Set();
-      onPath.add(0); // root
-      var posIdx = 0;
-      var currentLayout = positions[0].layout;
+      var path = traceP(ts, sample), onP = new Set([0]), cur = positions[0].layout;
       for (var i = 0; i < path.length; i++) {
-        var childIdx = path[i] === 'l' ? 0 : 1;
-        if (!currentLayout.children) break;
-        var childLayout = currentLayout.children[childIdx];
-        // Find position of this child
-        for (var j = 0; j < positions.length; j++) {
-          if (positions[j].layout === childLayout) { posIdx = j; break; }
-        }
-        onPath.add(posIdx);
-        currentLayout = childLayout;
+        if (!cur.children) break;
+        var ch = cur.children[path[i]==='l'?0:1];
+        for (var j = 0; j < positions.length; j++) { if (positions[j].layout === ch) { onP.add(j); break; } }
+        cur = ch;
       }
-      return onPath;
+      return onP;
     }
 
-    function renderTreeSVG(treeStruct, sample) {
-      var NODE_H_EXT = sample ? 62 : NODE_H; // taller nodes when showing sample values
-      var layout = computeLayout(treeStruct, 0);
-      var positions = [];
-      assignPositions(layout, layout.width / 2, 20, positions, NODE_H_EXT);
+    function renderTreeSVG(ts, sample) { currentTreeStruct=ts; currentSample=sample; expandedNodes={}; return buildSvg(); }
+    function rerender() { if(!currentTreeStruct) return; modalBody.innerHTML=''; detailScale=1;detailTx=0;detailTy=0; detailSvg=buildSvg(); detailSvg.style.transition='transform 0.15s ease'; modalBody.appendChild(detailSvg); }
 
-      var pathSet = getPathPositions(positions, treeStruct, sample);
-      var hasPath = pathSet.size > 0;
+    function buildSvg() {
+      var sample=currentSample, ts=currentTreeStruct, NH=sample?60:NODE_H;
+      var layout=computeLayout(ts,0,INITIAL_DEPTH,'R'), positions=[];
+      assignPos(layout, layout.width/2, 20, positions, NH);
+      var pathSet=getPS(positions,ts,sample), hasP=pathSet.size>0;
+      var ns='http://www.w3.org/2000/svg', mxX=0,mxY=0;
+      positions.forEach(function(p){mxX=Math.max(mxX,p.x+NODE_W/2);mxY=Math.max(mxY,p.y+NH);});
+      var svgW=mxX+40,svgH=mxY+40;
+      var el=document.createElementNS(ns,'svg');
+      el.setAttribute('width',svgW);el.setAttribute('height',svgH);
+      el.setAttribute('viewBox','0 0 '+svgW+' '+svgH);el.style.cursor='grab';
 
-      var maxX = 0, maxY = 0;
-      positions.forEach(function(p) {
-        if (p.x + NODE_W / 2 > maxX) maxX = p.x + NODE_W / 2;
-        if (p.y + NODE_H_EXT > maxY) maxY = p.y + NODE_H_EXT;
-      });
-      var svgW = maxX + 40, svgH = maxY + 40;
-
-      var ns = 'http://www.w3.org/2000/svg';
-      var svgEl = document.createElementNS(ns, 'svg');
-      svgEl.setAttribute('width', svgW);
-      svgEl.setAttribute('height', svgH);
-      svgEl.setAttribute('viewBox', '0 0 ' + svgW + ' ' + svgH);
-      svgEl.style.cursor = 'grab';
-
-      // Draw edges
-      for (var i = 0; i < positions.length; i++) {
-        var p = positions[i];
-        if (!p.layout.children) continue;
-        var leftChild = positions.find(function(pp) { return pp.layout === p.layout.children[0]; });
-        var rightChild = positions.find(function(pp) { return pp.layout === p.layout.children[1]; });
-        var pOnPath = pathSet.has(i);
-
-        [['l', leftChild, '✓ yes'], ['r', rightChild, '✗ no']].forEach(function(pair) {
-          var child = pair[1], label = pair[2];
-          if (!child) return;
-          var cIdx = positions.indexOf(child);
-          var onEdge = pOnPath && pathSet.has(cIdx);
-          var dimmed = hasPath && !onEdge;
-
-          var line = document.createElementNS(ns, 'line');
-          line.setAttribute('x1', p.x); line.setAttribute('y1', p.y + NODE_H_EXT);
-          line.setAttribute('x2', child.x); line.setAttribute('y2', child.y);
-          line.setAttribute('class', 'edge-line' + (onEdge ? ' on-path' : '') + (dimmed ? ' dimmed' : ''));
-          svgEl.appendChild(line);
-
-          var lbl = document.createElementNS(ns, 'text');
-          var lx = (p.x + child.x) / 2 + (pair[0] === 'l' ? -12 : 12);
-          var ly = (p.y + NODE_H_EXT + child.y) / 2;
-          lbl.setAttribute('x', lx); lbl.setAttribute('y', ly);
-          lbl.setAttribute('class', 'edge-label' + (dimmed ? ' dimmed' : ''));
-          lbl.textContent = label;
-          svgEl.appendChild(lbl);
+      for(var i=0;i<positions.length;i++){var p=positions[i];if(!p.layout.children)continue;var pOn=pathSet.has(i);
+        p.layout.children.forEach(function(cl,ci){
+          var cI=positions.findIndex(function(pp){return pp.layout===cl;});if(cI<0)return;
+          var c=positions[cI],onE=pOn&&pathSet.has(cI),dim=hasP&&!onE;
+          var ln=document.createElementNS(ns,'line');
+          ln.setAttribute('x1',p.x);ln.setAttribute('y1',p.y+NH);ln.setAttribute('x2',c.x);ln.setAttribute('y2',c.y);
+          ln.setAttribute('class','edge-line'+(onE?' on-path':'')+(dim?' dimmed':''));el.appendChild(ln);
+          var lb=document.createElementNS(ns,'text');lb.setAttribute('x',(p.x+c.x)/2+(ci===0?-10:10));
+          lb.setAttribute('y',(p.y+NH+c.y)/2);lb.setAttribute('class','edge-label'+(dim?' dimmed':''));
+          lb.textContent=ci===0?'\u2713':'\u2717';el.appendChild(lb);
         });
       }
 
-      // Draw nodes
-      for (var j = 0; j < positions.length; j++) {
-        var pos = positions[j];
-        var nd = pos.layout.node;
-        var rx = pos.x - NODE_W / 2, ry = pos.y;
-        var onPath = pathSet.has(j);
-        var dimmed = hasPath && !onPath;
+      for(var j=0;j<positions.length;j++){(function(j){
+        var pos=positions[j],nd=pos.layout.node,trunc=pos.layout.truncated||0,nPath=pos.layout.path;
+        var rx=pos.x-NODE_W/2,ry=pos.y,onP=pathSet.has(j),dim=hasP&&!onP;
+        var rect=document.createElementNS(ns,'rect');
+        rect.setAttribute('x',rx);rect.setAttribute('y',ry);rect.setAttribute('width',NODE_W);rect.setAttribute('height',NH);
+        rect.setAttribute('class',(nd.t==='l'?'node-rect leaf':'node-rect')+(onP?' on-path':'')+(dim?' dimmed':''));
+        el.appendChild(rect);
+        var t1=document.createElementNS(ns,'text');t1.setAttribute('x',pos.x);t1.setAttribute('y',ry+18);t1.setAttribute('class','node-text'+(dim?' dimmed':''));
+        var t2=document.createElementNS(ns,'text');t2.setAttribute('x',pos.x);t2.setAttribute('y',ry+33);t2.setAttribute('class','node-text'+(dim?' dimmed':''));
 
-        var rect = document.createElementNS(ns, 'rect');
-        rect.setAttribute('x', rx); rect.setAttribute('y', ry);
-        rect.setAttribute('width', NODE_W); rect.setAttribute('height', NODE_H_EXT);
-        var cls = (nd.t === 'l' ? 'node-rect leaf' : 'node-rect') + (onPath ? ' on-path' : '') + (dimmed ? ' dimmed' : '');
-        rect.setAttribute('class', cls);
-        svgEl.appendChild(rect);
-
-        var txt1 = document.createElementNS(ns, 'text');
-        txt1.setAttribute('x', pos.x); txt1.setAttribute('y', ry + 18);
-        txt1.setAttribute('class', 'node-text' + (dimmed ? ' dimmed' : ''));
-
-        var txt2 = document.createElementNS(ns, 'text');
-        txt2.setAttribute('x', pos.x); txt2.setAttribute('y', ry + 33);
-        txt2.setAttribute('class', 'node-text' + (dimmed ? ' dimmed' : ''));
-
-        if (nd.t === 's') {
-          txt1.textContent = nd.f + ' ' + nd.op + ' ' + nd.th.toFixed(4);
-          txt2.textContent = '';
-
-          // Show sample's feature value at this split
-          if (sample && onPath && sample[nd.f] !== undefined) {
-            var valTxt = document.createElementNS(ns, 'text');
-            valTxt.setAttribute('x', pos.x); valTxt.setAttribute('y', ry + (sample ? 50 : 44));
-            valTxt.setAttribute('class', 'node-text sample-val');
-            valTxt.textContent = nd.f + ' = ' + sample[nd.f].toFixed(3);
-            svgEl.appendChild(valTxt);
-          }
-        } else {
-          if (nd.c) {
-            var best = '', bestV = -1;
-            for (var k in nd.c) { if (nd.c[k] > bestV) { bestV = nd.c[k]; best = k; } }
-            txt1.textContent = '🌿 Class: ' + best;
-            txt2.textContent = (bestV * 100).toFixed(0) + '% confidence';
-          } else if (nd.v !== undefined) {
-            txt1.textContent = '🌿 Value: ' + nd.v.toFixed(4);
-            txt2.textContent = '';
-          }
+        if(trunc>0){
+          t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);
+          t2.textContent='\u25bc expand (+'+trunc+')';t2.style.fill='#1565c0';t2.style.fontSize='9px';t2.style.cursor='pointer';
+          rect.style.cursor='pointer';rect.style.strokeDasharray='4,2';
+          var xp=function(e){e.stopPropagation();expandedNodes[nPath]=(expandedNodes[nPath]||0)+2;rerender();};
+          rect.addEventListener('click',xp);t2.addEventListener('click',xp);
+        }else if(nd.t==='s'){
+          t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);t2.textContent='';
+          if(sample&&onP&&sample[nd.f]!==undefined){var vt=document.createElementNS(ns,'text');vt.setAttribute('x',pos.x);vt.setAttribute('y',ry+48);vt.setAttribute('class','node-text sample-val');vt.textContent=nd.f+' = '+sample[nd.f].toFixed(3);el.appendChild(vt);}
+        }else{
+          if(nd.c){var best='',bv=-1;for(var k in nd.c){if(nd.c[k]>bv){bv=nd.c[k];best=k;}}t1.textContent='🌿 Class: '+best;t2.textContent=(bv*100).toFixed(0)+'%';}
+          else if(nd.v!==undefined){t1.textContent='🌿 '+nd.v.toFixed(4);t2.textContent='';}
         }
-        svgEl.appendChild(txt1);
-        if (txt2.textContent) svgEl.appendChild(txt2);
-      }
+        el.appendChild(t1);if(t2.textContent)el.appendChild(t2);
+      })(j);}
 
-      return svgEl;
+      return el;
     }
   })();
 
@@ -933,6 +952,7 @@ _JS = r"""
       resultEl.textContent = '';
       var sd = document.getElementById('sample-display');
       if (sd) sd.classList.remove('visible');
+      traceActive = false;
     }
 
     function showSampleDisplay(sample, idx) {
@@ -961,6 +981,7 @@ _JS = r"""
       }
       var sample = predData.samples[idx];
       showSampleDisplay(sample, idx);
+      traceActive = true;
       var predictions = [];
 
       // Trace every tree
@@ -1004,19 +1025,61 @@ _JS = r"""
       });
 
       // Aggregate result
+      var agg = predData.aggregation || 'avg';
       if (predData.is_classifier) {
-        var votes = {};
-        predictions.forEach(function(p) {
-          if (p.result.cls) votes[p.result.cls] = (votes[p.result.cls]||0) + 1;
-        });
-        var best = '', bestCount = 0;
-        for (var k in votes) { if (votes[k] > bestCount) { bestCount = votes[k]; best = k; } }
-        resultEl.innerHTML = 'Ensemble prediction: <strong>' + best + '</strong> (' + bestCount + '/' + predictions.length + ' votes)';
+        if (agg === 'sum') {
+          // Additive classifier: sum of leaf values (log-odds), show raw sum
+          var sum = 0, cnt = 0;
+          predictions.forEach(function(p) {
+            if (p.result.val !== undefined) { sum += p.result.val; cnt++; }
+            else if (p.result.cls) { cnt++; } // has class dist but no single value
+          });
+          // For additive classifiers with class_distribution, do majority vote on per-tree predictions
+          var votes = {};
+          predictions.forEach(function(p) {
+            if (p.result.cls) votes[p.result.cls] = (votes[p.result.cls]||0) + 1;
+          });
+          var best = '', bestCount = 0;
+          for (var k in votes) { if (votes[k] > bestCount) { bestCount = votes[k]; best = k; } }
+          if (best) {
+            resultEl.innerHTML = 'Ensemble prediction: <strong>' + best + '</strong> (' + bestCount + '/' + predictions.length + ' trees)';
+          } else {
+            resultEl.innerHTML = 'Ensemble sum: <strong>' + sum.toFixed(4) + '</strong> (' + cnt + ' trees)';
+          }
+        } else {
+          // Vote-based: majority vote
+          var votes = {};
+          predictions.forEach(function(p) {
+            if (p.result.cls) votes[p.result.cls] = (votes[p.result.cls]||0) + 1;
+          });
+          var best = '', bestCount = 0;
+          for (var k in votes) { if (votes[k] > bestCount) { bestCount = votes[k]; best = k; } }
+          resultEl.innerHTML = 'Ensemble prediction: <strong>' + best + '</strong> (' + bestCount + '/' + predictions.length + ' votes)';
+        }
       } else {
+        // Regression
         var sum = 0, cnt = 0;
         predictions.forEach(function(p) { if (p.result.val !== undefined) { sum += p.result.val; cnt++; } });
-        var avg = cnt > 0 ? (sum / cnt).toFixed(4) : '?';
-        resultEl.innerHTML = 'Ensemble prediction: <strong>' + avg + '</strong> (avg of ' + cnt + ' trees)';
+        if (agg === 'sum') {
+          var final = sum;
+          var detail = 'sum of ' + cnt + ' trees';
+          // Apply boosting constants if available (sklearn GBM)
+          if (predData.boosting) {
+            var lr = predData.boosting.lr || 1;
+            var init = predData.boosting.init || 0;
+            final = init + lr * sum;
+            detail = 'init(' + init.toFixed(2) + ') + ' + lr + ' × sum(' + sum.toFixed(2) + ')';
+          }
+          resultEl.innerHTML = 'Ensemble prediction: <strong>' + final.toFixed(4) + '</strong> (' + detail + ')';
+        } else {
+          var avg = cnt > 0 ? (sum / cnt).toFixed(4) : '?';
+          resultEl.innerHTML = 'Ensemble prediction: <strong>' + avg + '</strong> (avg of ' + cnt + ' trees)';
+        }
+      }
+      // Show true label if available
+      if (predData.targets && idx < predData.targets.length && predData.targets[idx] !== null) {
+        var trueVal = predData.targets[idx];
+        resultEl.innerHTML += ' | True: <strong style="color:#2e7d32">' + trueVal + '</strong>';
       }
     });
   })();
