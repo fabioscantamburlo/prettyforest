@@ -297,11 +297,6 @@ class ForestRenderer:
             '<button id="page-next" class="tool-btn" title="Next page">▶</button>\n',
             "</div>\n",
             '<div class="tool-group">\n',
-            "<label>Highlight</label>\n",
-            '<button id="highlight-top" class="tool-btn">Top 3</button>\n',
-            '<button id="highlight-bottom" class="tool-btn">Bottom 3</button>\n',
-            "</div>\n",
-            '<div class="tool-group">\n',
             '<button id="reset-all" class="tool-btn">⟳ Reset</button>\n',
             "</div>\n",
             "</div>\n",
@@ -523,8 +518,6 @@ _JS = r"""
   var pagePrev = document.getElementById('page-prev');
   var pageNext = document.getElementById('page-next');
   var pageInfo = document.getElementById('page-info');
-  var highlightTop = document.getElementById('highlight-top');
-  var highlightBottom = document.getElementById('highlight-bottom');
   var resetAll = document.getElementById('reset-all');
   var spotlightPanel = document.getElementById('spotlight-panel');
   var spotlightClose = document.getElementById('spotlight-close');
@@ -634,70 +627,57 @@ _JS = r"""
   var seasonSelect = document.getElementById('season-toggle');
   if (seasonSelect) {
     var seasonPalettes = {
-      spring: { canopy: ['#90EE90','#98FB98','#FFB7C5','#FF69B4','#DDA0DD','#87CEAB'], ground: '#a8d8a0' },
-      summer: { canopy: ['#2E8B57','#3CB371','#6B8E23','#228B22','#32CD32'], ground: '#8cc97a' },
-      autumn: { canopy: ['#D2691E','#B22222','#DAA520','#CD853F','#FF8C00'], ground: '#8B6914' },
-      winter: { canopy: [], ground: '#B0C4DE', bare: true }
+      spring: { canopy: ['#90EE90','#98FB98','#FFB7C5','#FF69B4','#DDA0DD','#87CEAB'], ground: '#a8d8a0', sky: '#f1fff1' },
+      summer: { canopy: ['#2E8B57','#3CB371','#6B8E23','#228B22','#32CD32'], ground: '#8cc97a', sky: '#dceef5' },
+      autumn: { canopy: ['#D2691E','#B22222','#DAA520','#CD853F','#FF8C00'], ground: '#8B6914', sky: '#fff3e0' },
+      winter: { canopy: [], ground: '#B0C4DE', sky: '#e3f2fd', bare: true }
     };
+
+    // Store all originals immediately
+    var groundStops = svg.querySelectorAll('#ground-gradient stop');
+    var skyStops = svg.querySelectorAll('#sky-gradient stop');
+    var patches = svg.querySelectorAll('ellipse[data-patch]');
+    var origGround = []; groundStops.forEach(function(s) { origGround.push(s.getAttribute('stop-color')); });
+    var origSky = []; skyStops.forEach(function(s) { origSky.push(s.getAttribute('stop-color')); });
+    var origPatches = []; patches.forEach(function(e) { origPatches.push(e.getAttribute('fill')); });
 
     seasonSelect.addEventListener('change', function() {
       var season = this.value;
       var trees = svg.querySelectorAll('.visual-tree');
+
       if (!season) {
-        // Restore original canopy colors
+        // Restore everything
         trees.forEach(function(t) {
           var canopy = t.querySelector('.canopy');
           if (canopy && canopy.dataset.origFill) { canopy.setAttribute('fill', canopy.dataset.origFill); canopy.setAttribute('stroke', canopy.dataset.origStroke || canopy.dataset.origFill); }
           if (canopy) canopy.style.display = '';
         });
-        // Restore ground
-        var stops = svg.querySelectorAll('#ground-gradient stop');
-        if (stops.length >= 2 && stops[0].dataset.orig) { stops[0].setAttribute('stop-color', stops[0].dataset.orig); stops[1].setAttribute('stop-color', stops[1].dataset.orig); }
-        var skyStops = svg.querySelectorAll('#sky-gradient stop');
-        skyStops.forEach(function(s) { if (s.dataset.orig) s.setAttribute('stop-color', s.dataset.orig); });
-        svg.querySelectorAll('ellipse[data-patch]').forEach(function(e) { if (e.dataset.origFill) e.setAttribute('fill', e.dataset.origFill); });
+        groundStops.forEach(function(s, i) { if (origGround[i]) s.setAttribute('stop-color', origGround[i]); });
+        skyStops.forEach(function(s, i) { if (origSky[i]) s.setAttribute('stop-color', origSky[i]); });
+        patches.forEach(function(e, i) { if (origPatches[i]) e.setAttribute('fill', origPatches[i]); });
         return;
       }
+
       var pal = seasonPalettes[season];
       if (!pal) return;
 
-      // Recolor canopies
+      // Canopies
       trees.forEach(function(t) {
         var canopy = t.querySelector('.canopy');
         if (!canopy) return;
         if (!canopy.dataset.origFill) { canopy.dataset.origFill = canopy.getAttribute('fill'); canopy.dataset.origStroke = canopy.getAttribute('stroke'); }
-        if (pal.bare) {
-          canopy.style.display = 'none';
-        } else {
-          canopy.style.display = '';
-          var color = pal.canopy[Math.floor(Math.random() * pal.canopy.length)];
-          canopy.setAttribute('fill', color);
-          canopy.setAttribute('stroke', color);
-        }
+        if (pal.bare) { canopy.style.display = 'none'; }
+        else { canopy.style.display = ''; var c = pal.canopy[Math.floor(Math.random()*pal.canopy.length)]; canopy.setAttribute('fill', c); canopy.setAttribute('stroke', c); }
       });
 
-      // Recolor ground gradient
-      var stops = svg.querySelectorAll('#ground-gradient stop');
-      if (stops.length >= 2) {
-        if (!stops[0].dataset.orig) { stops[0].dataset.orig = stops[0].getAttribute('stop-color'); stops[1].dataset.orig = stops[1].getAttribute('stop-color'); }
-        var darkGround = pal.ground;
-        stops[0].setAttribute('stop-color', darkGround);
-        stops[1].setAttribute('stop-color', pal.ground);
-      }
+      // Ground
+      if (groundStops.length >= 2) { groundStops[0].setAttribute('stop-color', pal.ground); groundStops[1].setAttribute('stop-color', pal.ground); }
 
-      // Recolor sky gradient
-      var skyColors = { spring: '#e8f5e9', summer: '#dceef5', autumn: '#fff3e0', winter: '#e3f2fd' };
-      var skyStops = svg.querySelectorAll('#sky-gradient stop');
-      skyStops.forEach(function(s, i) {
-        if (!s.dataset.orig) s.dataset.orig = s.getAttribute('stop-color');
-        if (i === 0) s.setAttribute('stop-color', skyColors[season] || '#dceef5');
-      });
+      // Sky
+      if (skyStops.length >= 1) { skyStops[0].setAttribute('stop-color', pal.sky); }
 
-      // Recolor grass patches
-      svg.querySelectorAll('ellipse[data-patch]').forEach(function(e) {
-        if (!e.dataset.origFill) e.dataset.origFill = e.getAttribute('fill');
-        e.setAttribute('fill', pal.ground);
-      });
+      // Patches
+      patches.forEach(function(e) { e.setAttribute('fill', pal.ground); });
     });
   }
 
@@ -770,40 +750,6 @@ _JS = r"""
     totalPages = Math.ceil(sortedData.length / PAGE_SIZE);
     showPage();
   });
-
-  // --- Highlight top/bottom 3 (shows only those 3) ---
-  highlightTop.addEventListener('click', function() {
-    var ranked = treeData.slice().filter(function(d) { return metric(d) !== null; });
-    ranked.sort(function(a, b) { return (metric(b)||0) - (metric(a)||0); });
-    showSubset(ranked.slice(0, 3));
-    highlightTop.classList.add('active');
-    highlightBottom.classList.remove('active');
-  });
-  highlightBottom.addEventListener('click', function() {
-    var ranked = treeData.slice().filter(function(d) { return metric(d) !== null; });
-    ranked.sort(function(a, b) { return (metric(a)||0) - (metric(b)||0); });
-    showSubset(ranked.slice(0, 3));
-    highlightBottom.classList.add('active');
-    highlightTop.classList.remove('active');
-  });
-
-  function showSubset(subset) {
-    var subSet = new Set(subset.map(function(d) { return d.el; }));
-    treeData.forEach(function(d) {
-      if (subSet.has(d.el)) {
-        d.el.classList.remove('hidden');
-        d.el.classList.add('highlighted', 'grown', 'grow-trunk', 'grow-branches', 'grow-canopy');
-        d.el.style.opacity = '1';
-      } else {
-        d.el.classList.add('hidden');
-        d.el.classList.remove('highlighted', 'grown', 'grow-trunk', 'grow-branches', 'grow-canopy', 'spotlit');
-        d.el.style.opacity = '';
-      }
-    });
-    pageInfo.textContent = subset.length + ' highlighted';
-    pagePrev.disabled = true;
-    pageNext.disabled = true;
-  }
 
   // --- Reset ---
   resetAll.addEventListener('click', function() {
