@@ -6,6 +6,10 @@ MAX_TRUNK_WIDTH = 20
 TRUNK_HEIGHT_FRACTION = 0.35
 
 SEASON_PALETTES: dict[str, dict[str, list[str] | str]] = {
+    "spring": {
+        "canopy": ["#90EE90", "#98FB98", "#FFB7C5", "#FF69B4", "#DDA0DD", "#87CEAB"],
+        "ground": "#a8d8a0",
+    },
     "summer": {
         "canopy": ["#2E8B57", "#3CB371", "#6B8E23", "#228B22", "#32CD32"],
         "ground": "#8cc97a",

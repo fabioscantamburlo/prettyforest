@@ -14,7 +14,7 @@ class CrownShape(Enum):
 @dataclass
 class ForestConfig:
     seed: int = 42
-    season: Literal["summer", "autumn", "winter"] | None = None
+    season: Literal["spring", "summer", "autumn", "winter"] | None = None
 
 
 @dataclass

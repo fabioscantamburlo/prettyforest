@@ -266,6 +266,13 @@ class ForestRenderer:
             f"<h2>PrettyForest — {model_name}</h2>\n",
             '<div class="zoom-controls">\n',
             '<button id="dark-toggle" title="Toggle dark mode">🌙</button>\n',
+            '<select id="season-toggle" title="Season theme" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:11px;cursor:pointer">\n',
+            '<option value="">🌳 Natural</option>\n',
+            '<option value="spring">🌸 Spring</option>\n',
+            '<option value="summer">🌿 Summer</option>\n',
+            '<option value="autumn">🍂 Autumn</option>\n',
+            '<option value="winter">❄️ Winter</option>\n',
+            "</select>\n",
             '<button id="zoom-in" title="Zoom In">+</button>\n',
             '<button id="zoom-reset" title="Reset Zoom">⟳</button>\n',
             '<button id="zoom-out" title="Zoom Out">−</button>\n',
@@ -622,6 +629,60 @@ _JS = r"""
       darkBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
     });
   }
+
+  // Season toggle — recolors canopies and ground live
+  var seasonSelect = document.getElementById('season-toggle');
+  if (seasonSelect) {
+    var seasonPalettes = {
+      spring: { canopy: ['#90EE90','#98FB98','#FFB7C5','#FF69B4','#DDA0DD','#87CEAB'], ground: '#a8d8a0' },
+      summer: { canopy: ['#2E8B57','#3CB371','#6B8E23','#228B22','#32CD32'], ground: '#8cc97a' },
+      autumn: { canopy: ['#D2691E','#B22222','#DAA520','#CD853F','#FF8C00'], ground: '#8B6914' },
+      winter: { canopy: [], ground: '#B0C4DE', bare: true }
+    };
+
+    seasonSelect.addEventListener('change', function() {
+      var season = this.value;
+      var trees = svg.querySelectorAll('.visual-tree');
+      if (!season) {
+        // Restore original canopy colors (stored in data attr)
+        trees.forEach(function(t) {
+          var canopy = t.querySelector('.canopy');
+          if (canopy && canopy.dataset.origFill) canopy.setAttribute('fill', canopy.dataset.origFill);
+          if (canopy) canopy.style.display = '';
+        });
+        return;
+      }
+      var pal = seasonPalettes[season];
+      if (!pal) return;
+
+      trees.forEach(function(t) {
+        var canopy = t.querySelector('.canopy');
+        if (!canopy) return;
+        // Store original color on first change
+        if (!canopy.dataset.origFill) canopy.dataset.origFill = canopy.getAttribute('fill');
+
+        if (pal.bare) {
+          canopy.style.display = 'none';
+        } else {
+          canopy.style.display = '';
+          var color = pal.canopy[Math.floor(Math.random() * pal.canopy.length)];
+          canopy.setAttribute('fill', color);
+          canopy.setAttribute('stroke', color);
+        }
+      });
+
+      // Recolor ground
+      var groundRect = svg.querySelector('rect[fill="url(#ground-gradient)"]');
+      if (groundRect) {
+        var stops = svg.querySelectorAll('#ground-gradient stop');
+        if (stops.length >= 2) {
+          stops[0].setAttribute('stop-color', pal.ground);
+          stops[1].setAttribute('stop-color', pal.ground);
+        }
+      }
+    });
+  }
+
   container.addEventListener('wheel', function(e) {
     e.preventDefault();
     scale = Math.max(0.2, Math.min(5, scale * (e.deltaY > 0 ? 0.9 : 1.1)));

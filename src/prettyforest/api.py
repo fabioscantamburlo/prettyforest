@@ -21,7 +21,7 @@ def visualize(
     output_path: str | Path | None = None,
     feature_names: list[str] | None = None,
     seed: int = 42,
-    season: Literal["summer", "autumn", "winter"] | None = None,
+    season: Literal["spring", "summer", "autumn", "winter"] | None = None,
 ) -> str | None:
     """Visualize a trained tree-based model as an interactive forest.
 
