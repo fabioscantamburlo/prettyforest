@@ -194,7 +194,7 @@ class SceneComposer:
             color = rng.choice([patch_color, dark_patch, ground_color])
             opacity = rng.uniform(0.12, 0.35)
             parts.append(
-                f'<ellipse cx="{px:.0f}" cy="{py:.0f}" rx="{patch_w:.0f}" ry="{patch_h:.0f}" '
+                f'<ellipse data-patch="1" cx="{px:.0f}" cy="{py:.0f}" rx="{patch_w:.0f}" ry="{patch_h:.0f}" '
                 f'fill="{color}" opacity="{opacity:.2f}"/>'
             )
         return "\n".join(parts)

@@ -644,23 +644,28 @@ _JS = r"""
       var season = this.value;
       var trees = svg.querySelectorAll('.visual-tree');
       if (!season) {
-        // Restore original canopy colors (stored in data attr)
+        // Restore original canopy colors
         trees.forEach(function(t) {
           var canopy = t.querySelector('.canopy');
-          if (canopy && canopy.dataset.origFill) canopy.setAttribute('fill', canopy.dataset.origFill);
+          if (canopy && canopy.dataset.origFill) { canopy.setAttribute('fill', canopy.dataset.origFill); canopy.setAttribute('stroke', canopy.dataset.origStroke || canopy.dataset.origFill); }
           if (canopy) canopy.style.display = '';
         });
+        // Restore ground
+        var stops = svg.querySelectorAll('#ground-gradient stop');
+        if (stops.length >= 2 && stops[0].dataset.orig) { stops[0].setAttribute('stop-color', stops[0].dataset.orig); stops[1].setAttribute('stop-color', stops[1].dataset.orig); }
+        var skyStops = svg.querySelectorAll('#sky-gradient stop');
+        skyStops.forEach(function(s) { if (s.dataset.orig) s.setAttribute('stop-color', s.dataset.orig); });
+        svg.querySelectorAll('ellipse[data-patch]').forEach(function(e) { if (e.dataset.origFill) e.setAttribute('fill', e.dataset.origFill); });
         return;
       }
       var pal = seasonPalettes[season];
       if (!pal) return;
 
+      // Recolor canopies
       trees.forEach(function(t) {
         var canopy = t.querySelector('.canopy');
         if (!canopy) return;
-        // Store original color on first change
-        if (!canopy.dataset.origFill) canopy.dataset.origFill = canopy.getAttribute('fill');
-
+        if (!canopy.dataset.origFill) { canopy.dataset.origFill = canopy.getAttribute('fill'); canopy.dataset.origStroke = canopy.getAttribute('stroke'); }
         if (pal.bare) {
           canopy.style.display = 'none';
         } else {
@@ -671,15 +676,28 @@ _JS = r"""
         }
       });
 
-      // Recolor ground
-      var groundRect = svg.querySelector('rect[fill="url(#ground-gradient)"]');
-      if (groundRect) {
-        var stops = svg.querySelectorAll('#ground-gradient stop');
-        if (stops.length >= 2) {
-          stops[0].setAttribute('stop-color', pal.ground);
-          stops[1].setAttribute('stop-color', pal.ground);
-        }
+      // Recolor ground gradient
+      var stops = svg.querySelectorAll('#ground-gradient stop');
+      if (stops.length >= 2) {
+        if (!stops[0].dataset.orig) { stops[0].dataset.orig = stops[0].getAttribute('stop-color'); stops[1].dataset.orig = stops[1].getAttribute('stop-color'); }
+        var darkGround = pal.ground;
+        stops[0].setAttribute('stop-color', darkGround);
+        stops[1].setAttribute('stop-color', pal.ground);
       }
+
+      // Recolor sky gradient
+      var skyColors = { spring: '#e8f5e9', summer: '#dceef5', autumn: '#fff3e0', winter: '#e3f2fd' };
+      var skyStops = svg.querySelectorAll('#sky-gradient stop');
+      skyStops.forEach(function(s, i) {
+        if (!s.dataset.orig) s.dataset.orig = s.getAttribute('stop-color');
+        if (i === 0) s.setAttribute('stop-color', skyColors[season] || '#dceef5');
+      });
+
+      // Recolor grass patches
+      svg.querySelectorAll('ellipse[data-patch]').forEach(function(e) {
+        if (!e.dataset.origFill) e.dataset.origFill = e.getAttribute('fill');
+        e.setAttribute('fill', pal.ground);
+      });
     });
   }
 
