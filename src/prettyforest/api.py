@@ -46,8 +46,10 @@ def visualize(
         trees = [result]
 
     ensemble_type = _detect_ensemble_type(model)
+    model_name = _detect_model_name(model)
 
     from prettyforest.rendering.forest import ForestConfig, ForestRenderer
+
     config = ForestConfig(seed=seed, season=season)
 
     forest_data = None
@@ -71,9 +73,27 @@ def visualize(
     # Extract boosting metadata for correct prediction aggregation
     boosting_meta = _extract_boosting_meta(model)
 
+    # Pre-compute the model's actual predictions for the embedded samples
+    model_predictions = None
+    if data is not None:
+        try:
+            if isinstance(data, np.ndarray):
+                pred_input = data[:100]
+            else:
+                pred_input = data.head(100).to_numpy()
+            model_predictions = model.predict(pred_input).tolist()
+        except Exception:
+            pass
+
     html = ForestRenderer().render(
-        trees, config, ensemble_type=ensemble_type, data=forest_data,
-        boosting_meta=boosting_meta, target=target_list,
+        trees,
+        config,
+        ensemble_type=ensemble_type,
+        data=forest_data,
+        boosting_meta=boosting_meta,
+        target=target_list,
+        model_name=model_name,
+        model_predictions=model_predictions,
     )
     return _handle_output(html, output_path)
 
@@ -121,12 +141,32 @@ def _handle_output(html: str, output_path: str | Path | None) -> str | None:
 
     try:
         from IPython import get_ipython
+
         shell = get_ipython()
         if shell is not None and "IPKernelApp" in shell.config:
             from IPython.display import HTML, display
+
             display(HTML(html))
             return None
     except (ImportError, AttributeError):
         pass
 
     return html
+
+
+def _detect_model_name(model: Any) -> str:
+    """Return a human-readable model name."""
+    name = type(model).__name__
+    mapping = {
+        "DecisionTreeClassifier": "Decision Tree (Classification)",
+        "DecisionTreeRegressor": "Decision Tree (Regression)",
+        "RandomForestClassifier": "Random Forest (Classification)",
+        "RandomForestRegressor": "Random Forest (Regression)",
+        "GradientBoostingClassifier": "Gradient Boosting (Classification)",
+        "GradientBoostingRegressor": "Gradient Boosting (Regression)",
+        "LGBMClassifier": "LightGBM (Classification)",
+        "LGBMRegressor": "LightGBM (Regression)",
+        "CatBoostClassifier": "CatBoost (Classification)",
+        "CatBoostRegressor": "CatBoost (Regression)",
+    }
+    return mapping.get(name, name)

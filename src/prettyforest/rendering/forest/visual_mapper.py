@@ -33,19 +33,25 @@ class VisualMapper:
         results: list[TreeVisuals] = []
         for tree in trees:
             height = _lerp(tree.max_depth, min_d, max_d, MIN_HEIGHT, MAX_HEIGHT)
-            trunk_width = _lerp(tree.node_count, min_c, max_c, MIN_TRUNK_WIDTH, MAX_TRUNK_WIDTH)
+            trunk_width = _lerp(
+                tree.node_count, min_c, max_c, MIN_TRUNK_WIDTH, MAX_TRUNK_WIDTH
+            )
             canopy_color = _compute_color(tree, season, rng, ensemble_type)
             crown_shape = rng.choice(list(CrownShape))
-            results.append(TreeVisuals(
-                height=height,
-                trunk_width=trunk_width,
-                canopy_color=canopy_color,
-                crown_shape=crown_shape,
-            ))
+            results.append(
+                TreeVisuals(
+                    height=height,
+                    trunk_width=trunk_width,
+                    canopy_color=canopy_color,
+                    crown_shape=crown_shape,
+                )
+            )
         return results
 
 
-def _lerp(value: float, src_min: float, src_max: float, dst_min: float, dst_max: float) -> float:
+def _lerp(
+    value: float, src_min: float, src_max: float, dst_min: float, dst_max: float
+) -> float:
     if src_max == src_min:
         return (dst_min + dst_max) / 2
     t = (value - src_min) / (src_max - src_min)
@@ -53,7 +59,10 @@ def _lerp(value: float, src_min: float, src_max: float, dst_min: float, dst_max:
 
 
 def _compute_color(
-    tree: UnifiedTree, season: str | None, rng: random.Random, ensemble_type: EnsembleType
+    tree: UnifiedTree,
+    season: str | None,
+    rng: random.Random,
+    ensemble_type: EnsembleType,
 ) -> str:
     if season and season in SEASON_PALETTES:
         palette = SEASON_PALETTES[season]
@@ -97,7 +106,9 @@ def _compute_metric(tree: UnifiedTree, ensemble_type: EnsembleType) -> float:
                 if leaf.prediction_value is not None:
                     magnitudes.append(abs(leaf.prediction_value))
                 elif leaf.class_distribution:
-                    magnitudes.append(max(abs(v) for v in leaf.class_distribution.values()))
+                    magnitudes.append(
+                        max(abs(v) for v in leaf.class_distribution.values())
+                    )
             if not magnitudes:
                 return 0.5
             # Normalize: low magnitude = early tree (green), high = later corrections (amber)
@@ -106,7 +117,11 @@ def _compute_metric(tree: UnifiedTree, ensemble_type: EnsembleType) -> float:
             return min(1.0, avg_mag / max_mag) if max_mag > 0 else 0.5
     else:
         # Regression: variance of leaf predictions
-        values = [leaf.prediction_value for leaf in leaves if leaf.prediction_value is not None]
+        values = [
+            leaf.prediction_value
+            for leaf in leaves
+            if leaf.prediction_value is not None
+        ]
         if len(values) < 2:
             return 0.0
         mean = sum(values) / len(values)

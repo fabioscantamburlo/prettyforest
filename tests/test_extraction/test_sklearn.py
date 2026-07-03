@@ -5,7 +5,6 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
     GradientBoostingClassifier,
     RandomForestClassifier,
-    RandomForestRegressor,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 

@@ -20,7 +20,9 @@ def main():
 
     # Use a subset for speed (full MNIST is 70k samples)
     X, _, y, _ = train_test_split(X, y, train_size=10000, random_state=42, stratify=y)
-    print(f"Dataset: {X.shape[0]} samples, {X.shape[1]} features, {len(np.unique(y))} classes")
+    print(
+        f"Dataset: {X.shape[0]} samples, {X.shape[1]} features, {len(np.unique(y))} classes"
+    )
 
     # Train/test split
     X_train, X_test, y_train, y_test = train_test_split(
@@ -31,8 +33,11 @@ def main():
     # Cross-validation
     print("\n5-fold Cross-Validation...")
     rf = RandomForestClassifier(
-        n_estimators=50, max_depth=15, max_features=10,
-        random_state=42, n_jobs=-1,
+        n_estimators=50,
+        max_depth=15,
+        max_features=10,
+        random_state=42,
+        n_jobs=-1,
     )
     scores = cross_val_score(rf, X_train, y_train, cv=5, scoring="accuracy", n_jobs=-1)
     print(f"  CV Accuracy: {scores.mean():.4f} ± {scores.std():.4f}")

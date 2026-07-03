@@ -6,7 +6,11 @@ import random
 
 from prettyforest.models import EnsembleType, UnifiedTree
 from prettyforest.rendering.forest.models import ForestConfig
-from prettyforest.rendering.forest.scene_composer import MAX_VISIBLE, SceneComposer, TreeMeta
+from prettyforest.rendering.forest.scene_composer import (
+    MAX_VISIBLE,
+    SceneComposer,
+    TreeMeta,
+)
 from prettyforest.rendering.forest.tree_shape_generator import TreeShapeGenerator
 from prettyforest.rendering.forest.visual_mapper import VisualMapper
 
@@ -25,28 +29,53 @@ class ForestRenderer:
         data=None,
         boosting_meta: dict | None = None,
         target: list | None = None,
+        model_name: str = "Unknown Model",
+        model_predictions: list | None = None,
     ) -> str:
         rng = random.Random(config.seed)
         total_count = len(trees)
 
-        visuals = self._mapper.map_trees(trees, rng, season=config.season, ensemble_type=ensemble_type)
+        visuals = self._mapper.map_trees(
+            trees, rng, season=config.season, ensemble_type=ensemble_type
+        )
         paths = [self._shape_gen.generate(v, rng) for v in visuals]
-        metas = [self._compute_meta(tree, i, ensemble_type) for i, tree in enumerate(trees)]
+        metas = [
+            self._compute_meta(tree, i, ensemble_type) for i, tree in enumerate(trees)
+        ]
 
         svg = self._composer.compose(paths, visuals, metas, config, total_count, rng)
-        is_classifier = trees[0].is_classifier if trees else True
+        # Determine if this is a classification task from the model name
+        is_classifier = "Classification" in model_name or "Classifier" in model_name
 
         # Build prediction data if data was provided
         predict_json = ""
         if data is not None:
-            predict_json = self._build_predict_json(trees, data, ensemble_type, boosting_meta, target)
+            predict_json = self._build_predict_json(
+                trees,
+                data,
+                ensemble_type,
+                boosting_meta,
+                target,
+                is_classifier,
+                model_predictions,
+            )
 
         # Always embed tree structures for detail view
         trees_json = self._build_trees_json(trees)
 
-        return self._wrap_html(svg, ensemble_type, is_classifier, total_count, predict_json, trees_json)
+        return self._wrap_html(
+            svg,
+            ensemble_type,
+            is_classifier,
+            total_count,
+            predict_json,
+            trees_json,
+            model_name,
+        )
 
-    def _compute_meta(self, tree: UnifiedTree, index: int, ensemble_type: EnsembleType) -> TreeMeta:
+    def _compute_meta(
+        self, tree: UnifiedTree, index: int, ensemble_type: EnsembleType
+    ) -> TreeMeta:
         leaves = [n for n in tree.iter_nodes() if n.is_leaf]
         n_leaves = len(leaves)
 
@@ -67,10 +96,18 @@ class ForestRenderer:
                     if leaf.prediction_value is not None:
                         magnitudes.append(abs(leaf.prediction_value))
                     elif leaf.class_distribution:
-                        magnitudes.append(max(abs(v) for v in leaf.class_distribution.values()))
-                leaf_magnitude = sum(magnitudes) / len(magnitudes) if magnitudes else None
+                        magnitudes.append(
+                            max(abs(v) for v in leaf.class_distribution.values())
+                        )
+                leaf_magnitude = (
+                    sum(magnitudes) / len(magnitudes) if magnitudes else None
+                )
         else:
-            values = [l.prediction_value for l in leaves if l.prediction_value is not None]
+            values = [
+                leaf.prediction_value
+                for leaf in leaves
+                if leaf.prediction_value is not None
+            ]
             if len(values) >= 2:
                 mean = sum(values) / len(values)
                 pred_variance = sum((v - mean) ** 2 for v in values) / len(values)
@@ -85,7 +122,16 @@ class ForestRenderer:
             leaf_magnitude=leaf_magnitude,
         )
 
-    def _build_predict_json(self, trees: list[UnifiedTree], data, ensemble_type: EnsembleType = EnsembleType.SINGLE, boosting_meta: dict | None = None, target: list | None = None) -> str:
+    def _build_predict_json(
+        self,
+        trees: list[UnifiedTree],
+        data,
+        ensemble_type: EnsembleType = EnsembleType.SINGLE,
+        boosting_meta: dict | None = None,
+        target: list | None = None,
+        is_classifier: bool = True,
+        model_predictions: list | None = None,
+    ) -> str:
         """Build compact JSON with tree structures + sample rows for client-side prediction."""
         import json
         import polars as pl
@@ -94,11 +140,19 @@ class ForestRenderer:
         max_samples = 100
         if isinstance(data, pl.DataFrame):
             n_rows = data.height
-            feature_names = data.columns
+            # Use the tree's feature names (what splits reference) not the user's column names
+            tree_feature_names = trees[0].feature_names if trees else data.columns
+            data_columns = data.columns
             rows = []
             for i in range(min(n_rows, max_samples)):
                 row = data.row(i, named=True)
-                rows.append({k: float(v) for k, v in row.items()})
+                # Map: tree_feature_name -> value from the positional column
+                mapped = {}
+                for col_idx, tree_fname in enumerate(tree_feature_names):
+                    if col_idx < len(data_columns):
+                        mapped[tree_fname] = float(row[data_columns[col_idx]])
+                rows.append(mapped)
+            feature_names = tree_feature_names
         else:
             return ""
 
@@ -109,7 +163,9 @@ class ForestRenderer:
                 if node.prediction_value is not None:
                     n["v"] = round(node.prediction_value, 6)
                 if node.class_distribution is not None:
-                    n["c"] = {k: round(v, 4) for k, v in node.class_distribution.items()}
+                    n["c"] = {
+                        k: round(v, 4) for k, v in node.class_distribution.items()
+                    }
                 return n
             return {
                 "t": "s",
@@ -123,14 +179,19 @@ class ForestRenderer:
         compact_trees = [serialize_node(tree.root) for tree in trees]
 
         # Aggregation method: "avg" for vote-based, "sum" for additive
-        agg = "avg" if ensemble_type == EnsembleType.VOTE_BASED or ensemble_type == EnsembleType.SINGLE else "sum"
+        agg = (
+            "avg"
+            if ensemble_type == EnsembleType.VOTE_BASED
+            or ensemble_type == EnsembleType.SINGLE
+            else "sum"
+        )
 
         payload = {
             "features": feature_names,
             "samples": rows,
             "n_rows": n_rows,
             "trees": compact_trees,
-            "is_classifier": trees[0].is_classifier if trees else True,
+            "is_classifier": is_classifier,
             "aggregation": agg,
         }
         if boosting_meta:
@@ -138,7 +199,11 @@ class ForestRenderer:
         if target is not None:
             # Embed targets for the same rows we embedded
             max_idx = min(n_rows, max_samples)
-            payload["targets"] = [target[i] if i < len(target) else None for i in range(max_idx)]
+            payload["targets"] = [
+                target[i] if i < len(target) else None for i in range(max_idx)
+            ]
+        if model_predictions is not None:
+            payload["predictions"] = model_predictions[:max_samples]
         return json.dumps(payload)
 
     def _build_trees_json(self, trees: list[UnifiedTree]) -> str:
@@ -151,7 +216,9 @@ class ForestRenderer:
                 if node.prediction_value is not None:
                     n["v"] = round(node.prediction_value, 6)
                 if node.class_distribution is not None:
-                    n["c"] = {k: round(v, 4) for k, v in node.class_distribution.items()}
+                    n["c"] = {
+                        k: round(v, 4) for k, v in node.class_distribution.items()
+                    }
                 return n
             return {
                 "t": "s",
@@ -164,7 +231,16 @@ class ForestRenderer:
 
         return json.dumps([serialize_node(tree.root) for tree in trees])
 
-    def _wrap_html(self, svg: str, ensemble_type: EnsembleType, is_classifier: bool, total: int, predict_json: str = "", trees_json: str = "") -> str:
+    def _wrap_html(
+        self,
+        svg: str,
+        ensemble_type: EnsembleType,
+        is_classifier: bool,
+        total: int,
+        predict_json: str = "",
+        trees_json: str = "",
+        model_name: str = "Unknown Model",
+    ) -> str:
         if not is_classifier:
             metric_name = "variance"
             metric_label = "Pred Variance"
@@ -187,7 +263,7 @@ class ForestRenderer:
             "</head>\n",
             "<body>\n",
             '<div class="header">\n',
-            "<h2>PrettyForest</h2>\n",
+            f"<h2>PrettyForest — {model_name}</h2>\n",
             '<div class="zoom-controls">\n',
             '<button id="dark-toggle" title="Toggle dark mode">🌙</button>\n',
             '<button id="zoom-in" title="Zoom In">+</button>\n',
@@ -198,23 +274,23 @@ class ForestRenderer:
             "</div>\n",
             '<div class="toolbar">\n',
             '<div class="tool-group">\n',
-            '<label>Sort by</label>\n',
+            "<label>Sort by</label>\n",
             '<select id="sort-by">\n',
             '<option value="natural">Natural</option>\n',
             '<option value="depth">Depth</option>\n',
             '<option value="nodes">Nodes</option>\n',
             '<option value="leaves">Leaves</option>\n',
             f'<option value="metric">{metric_label}</option>\n',
-            '</select>\n',
+            "</select>\n",
             "</div>\n",
             '<div class="tool-group">\n',
-            '<label>Showing</label>\n',
+            "<label>Showing</label>\n",
             '<button id="page-prev" class="tool-btn" title="Previous page">◀</button>\n',
             f'<span id="page-info">1–{page_size} of {total}</span>\n',
             '<button id="page-next" class="tool-btn" title="Next page">▶</button>\n',
             "</div>\n",
             '<div class="tool-group">\n',
-            '<label>Highlight</label>\n',
+            "<label>Highlight</label>\n",
             '<button id="highlight-top" class="tool-btn">Top 3</button>\n',
             '<button id="highlight-bottom" class="tool-btn">Bottom 3</button>\n',
             "</div>\n",
@@ -226,62 +302,82 @@ class ForestRenderer:
             '<button id="spotlight-close">✕</button>\n',
             '<div id="spotlight-content"></div>\n',
             "</div>\n",
+            # Model info panel (toggled by ? button)
+            '<div class="model-info-panel" id="model-info-panel">\n',
+            '<button id="info-panel-close">✕</button>\n',
+            f"<strong>{model_name}</strong>\n",
+            '<div id="model-description" class="model-desc"></div>\n',
+            "</div>\n",
         ]
 
         if predict_json:
-            parts.extend([
-                '<div class="predict-panel" id="predict-panel">\n',
-                '<div class="predict-header">\n',
-                '<strong>🔍 Predict</strong>\n',
-                '<button id="predict-close" title="Close">✕</button>\n',
-                '</div>\n',
-                '<div class="predict-body">\n',
-                '<label>Sample row:</label>\n',
-                '<input type="number" id="predict-row" min="0" value="0" style="width:60px"/>\n',
-                '<button id="predict-go" class="tool-btn">Trace</button>\n',
-                '<button id="predict-clear" class="tool-btn">Clear</button>\n',
-                '<div id="predict-result"></div>\n',
-                '</div>\n',
-                "</div>\n",
-            ])
+            parts.extend(
+                [
+                    '<div class="predict-panel" id="predict-panel">\n',
+                    '<div class="predict-header">\n',
+                    "<strong>🔍 Predict</strong>\n",
+                    '<button id="predict-close" title="Close">✕</button>\n',
+                    "</div>\n",
+                    '<div class="predict-body">\n',
+                    "<label>Sample row:</label>\n",
+                    '<input type="number" id="predict-row" min="0" value="0" style="width:60px"/>\n',
+                    '<button id="predict-go" class="tool-btn">Trace</button>\n',
+                    '<button id="predict-clear" class="tool-btn">Clear</button>\n',
+                    '<div id="predict-result"></div>\n',
+                    "</div>\n",
+                    "</div>\n",
+                ]
+            )
 
         # Sample data display (inline bar, shown when a sample is traced)
         parts.append('<div class="sample-display" id="sample-display"></div>\n')
 
-        parts.extend([
-            '<div class="forest-container" id="forest-container">\n',
-            f"{svg}\n",
-            "</div>\n",
-            '<div class="tooltip" id="tooltip"></div>\n',
-        ])
+        parts.extend(
+            [
+                '<div class="forest-container" id="forest-container">\n',
+                f"{svg}\n",
+                "</div>\n",
+                '<div class="tooltip" id="tooltip"></div>\n',
+            ]
+        )
 
         if predict_json:
-            parts.append(f'<script id="predict-data" type="application/json">{predict_json}</script>\n')
+            parts.append(
+                f'<script id="predict-data" type="application/json">{predict_json}</script>\n'
+            )
 
         # Always embed tree structures for detail modal
-        parts.append(f'<script id="trees-data" type="application/json">{trees_json}</script>\n')
+        parts.append(
+            f'<script id="trees-data" type="application/json">{trees_json}</script>\n'
+        )
 
         # Detail modal (rendered on the fly via JS)
         parts.append('<div class="detail-modal" id="detail-modal">\n')
-        parts.append('<div class="detail-header"><span id="detail-title">Tree #0</span><button id="detail-close">✕</button></div>\n')
+        parts.append(
+            '<div class="detail-header"><span id="detail-title">Tree #0</span><button id="detail-close">✕</button></div>\n'
+        )
+        parts.append('<div class="detail-note" id="detail-note"></div>\n')
         parts.append('<div class="detail-sample" id="detail-sample"></div>\n')
         parts.append('<div class="detail-body" id="detail-body"></div>\n')
-        parts.append('</div>\n')
+        parts.append("</div>\n")
 
         has_predict = "true" if predict_json else "false"
-        parts.extend([
-            f'<script>var METRIC_KEY="{metric_name}",METRIC_LABEL="{metric_label}",TOTAL={total},PAGE_SIZE={page_size},HAS_PREDICT={has_predict};</script>\n',
-            f"<script>{_JS}</script>\n",
-            "</body>\n",
-            "</html>",
-        ])
+        is_boosted = "true" if ensemble_type == EnsembleType.ADDITIVE else "false"
+        parts.extend(
+            [
+                f'<script>var METRIC_KEY="{metric_name}",METRIC_LABEL="{metric_label}",TOTAL={total},PAGE_SIZE={page_size},HAS_PREDICT={has_predict},IS_BOOSTED={is_boosted},MODEL_NAME="{model_name}";</script>\n',
+                f"<script>{_JS}</script>\n",
+                "</body>\n",
+                "</html>",
+            ]
+        )
 
         return "".join(parts)
 
 
 _CSS = """\
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 24px; background: rgba(255,255,255,0.97); border-bottom: 1px solid #e0e0e0; }
 .header h2 { font-size: 16px; color: #333; }
 .zoom-controls { display: flex; align-items: center; gap: 6px; }
@@ -305,7 +401,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 #spotlight-content strong { font-size: 13px; display: block; margin-bottom: 4px; }
 .stat-row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
 .stat-label { color: #666; } .stat-value { font-weight: 500; }
-.forest-container { width: 100%; height: calc(100vh - 94px); overflow: hidden; position: relative; }
+.forest-container { width: 100%; flex: 1; min-height: 0; overflow: hidden; position: relative; }
 .forest-container svg { display: block; width: 100%; height: 100%; cursor: grab; transition: transform 0.15s ease; }
 .forest-container svg:active { cursor: grabbing; }
 .tooltip { position: fixed; display: none; background: rgba(20,20,20,0.92); color: #f0f0f0; padding: 10px 14px; border-radius: 8px; font-size: 12px; line-height: 1.7; pointer-events: none; z-index: 1000; max-width: 240px; box-shadow: 0 6px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
@@ -368,6 +464,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .detail-sample .chip { background: #fff; border: 1px solid #c8e6c9; border-radius: 4px; padding: 3px 8px; font-size: 10px; white-space: nowrap; flex-shrink: 0; }
 .detail-sample .chip .chip-name { color: #555; }
 .detail-sample .chip .chip-val { color: #1565c0; font-weight: 600; margin-left: 3px; }
+.detail-note { padding: 4px 24px; font-size: 11px; color: #f57c00; background: #fff8e1; border-bottom: 1px solid #ffe082; display: none; }
+.detail-note.visible { display: block; }
+.model-info-panel { position: fixed; top: 50px; left: 50%; transform: translateX(-50%); width: 500px; max-width: 90vw; background: rgba(255,255,255,0.98); border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 20px 24px; display: none; z-index: 600; border: 1px solid #e0e0e0; }
+.model-info-panel.visible { display: block; }
+#info-panel-close { position: absolute; top: 8px; right: 12px; border: none; background: none; font-size: 16px; cursor: pointer; color: #888; }
+.model-info-panel strong { font-size: 14px; color: #2e7d32; display: block; margin-bottom: 8px; }
+.model-desc { font-size: 12px; line-height: 1.7; color: #444; }
+.model-desc p { margin: 6px 0; }
+.model-desc .key { font-weight: 600; color: #333; }
 
 /* Dark mode */
 body.dark { background: #1a1a2e; color: #e0e0e0; }
@@ -669,15 +774,36 @@ _JS = r"""
     spotlitEl = null; spotlightPanel.classList.remove('visible');
   }
 
-  // --- Info button ---
+  // --- Info button + Model description ---
   (function() {
     var infoBtn = document.getElementById('info-btn');
-    var legendPanel = document.getElementById('legend-panel');
-    if (!infoBtn || !legendPanel) return;
+    var infoPanel = document.getElementById('model-info-panel');
+    var infoClose = document.getElementById('info-panel-close');
+    var descEl = document.getElementById('model-description');
+    if (!infoBtn || !infoPanel) return;
+
+    var descriptions = {
+      'Random Forest (Classification)': '<p><span class="key">How it works:</span> Trains multiple independent trees on random subsets of data (bagging). Each tree votes for a class. Final prediction = majority vote.</p><p><span class="key">Each tree:</span> Splits on original features with real class proportions in leaves. Fully interpretable individually.</p><p><span class="key">Reading tips:</span> Purity shows how cleanly each tree separates classes. High purity = the tree is confident in its leaves.</p>',
+      'Random Forest (Regression)': '<p><span class="key">How it works:</span> Trains multiple independent trees on random subsets of data. Each tree predicts a value. Final prediction = average of all trees.</p><p><span class="key">Each tree:</span> Splits on original features with target means in leaves. Each leaf is a direct prediction.</p><p><span class="key">Reading tips:</span> Variance shows how spread out the leaf predictions are within each tree.</p>',
+      'Gradient Boosting (Classification)': '<p><span class="key">How it works:</span> Trains trees sequentially. Each tree corrects the errors of the previous ensemble by fitting gradients (residuals).</p><p><span class="key">Each tree:</span> Splits on original features, but leaf values are small <em>gradient corrections</em>, not class predictions. A leaf value of +0.12 means "push the score slightly toward this class."</p><p><span class="key">Reading tips:</span> Final prediction = initial value + learning_rate × sum of all tree corrections. Individual tree leaf values are not standalone predictions.</p>',
+      'Gradient Boosting (Regression)': '<p><span class="key">How it works:</span> Trains trees sequentially. Each tree predicts the residual (error) of the current ensemble.</p><p><span class="key">Each tree:</span> Splits on original features, leaf values are residual corrections. Final prediction = initial mean + lr × sum(leaf values).</p><p><span class="key">Reading tips:</span> Early trees make large corrections, later trees fine-tune. Magnitude decreases over iterations.</p>',
+      'LightGBM (Classification)': '<p><span class="key">How it works:</span> Gradient boosting with histogram-based splits for speed. Trains trees on gradients sequentially.</p><p><span class="key">Each tree:</span> Splits on original features using histogram bins. Leaf values are log-odds corrections (not class probabilities).</p><p><span class="key">Reading tips:</span> Final prediction = sum of all leaf values, then softmax for probabilities. Individual leaves show gradient steps.</p>',
+      'LightGBM (Regression)': '<p><span class="key">How it works:</span> Fast gradient boosting with histogram splits. Each tree predicts the residual error.</p><p><span class="key">Each tree:</span> Leaf values are additive corrections. Final prediction = sum of all tree leaf values.</p>',
+      'CatBoost (Classification)': '<p><span class="key">How it works:</span> Ordered boosting with symmetric trees. Handles categorical features natively.</p><p><span class="key">Each tree:</span> Uses oblivious (symmetric) decision trees — same split at each depth level. Leaf values are gradient corrections.</p><p><span class="key">Reading tips:</span> Leaf values are small corrections. Final prediction comes from summing all trees. Exact reconstruction may differ slightly due to internal scaling.</p>',
+      'CatBoost (Regression)': '<p><span class="key">How it works:</span> Ordered boosting with symmetric trees on residuals.</p><p><span class="key">Each tree:</span> Symmetric structure, leaf values are residual corrections summed for final prediction.</p>',
+      'Decision Tree (Classification)': '<p><span class="key">How it works:</span> A single tree that recursively splits the data to separate classes.</p><p><span class="key">The tree:</span> Each split uses the feature that best separates classes (by Gini or entropy). Leaves show class proportions from training data.</p><p><span class="key">Reading tips:</span> The forest shows one tree. This IS the full model — no ensemble aggregation.</p>',
+      'Decision Tree (Regression)': '<p><span class="key">How it works:</span> A single tree that recursively splits to minimize prediction error.</p><p><span class="key">The tree:</span> Leaves contain the mean target value of training samples that landed there. This is a direct prediction.</p>',
+    };
+
+    var desc = descriptions[MODEL_NAME] || '<p>Tree-based ensemble model.</p>';
+    desc += '<hr style="margin:10px 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#666"><strong>Visual encoding:</strong> Tree height = depth, trunk width = node count, canopy color = green (pure/low variance) to amber (impure/high variance).</p>';
+    descEl.innerHTML = desc;
+
     infoBtn.addEventListener('click', function(e) {
       e.stopPropagation();
-      legendPanel.style.display = legendPanel.style.display === 'none' ? '' : 'none';
+      infoPanel.classList.toggle('visible');
     });
+    if (infoClose) infoClose.addEventListener('click', function() { infoPanel.classList.remove('visible'); });
   })();
 
   // --- Double-click to open tree detail modal ---
@@ -700,6 +826,17 @@ _JS = r"""
       modalTitle.textContent = 'Tree #' + treeIdx + ' — Depth: ' + depth + ', Nodes: ' + nodes;
       modalBody.innerHTML = '';
       detailScale = 1; detailTx = 0; detailTy = 0;
+
+      // Show boosted model note
+      var noteEl = document.getElementById('detail-note');
+      if (noteEl) {
+        if (IS_BOOSTED) {
+          noteEl.textContent = '\u26a0\ufe0f This is a boosted tree — leaf values are gradient corrections (residuals), not final predictions. The sample path and splits are on original features.';
+          noteEl.classList.add('visible');
+        } else {
+          noteEl.classList.remove('visible');
+        }
+      }
 
       // Get traced sample if available
       var tracedSample = null;
@@ -890,13 +1027,15 @@ _JS = r"""
           t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);
           t2.textContent='\u25bc expand (+'+trunc+')';t2.style.fill='#1565c0';t2.style.fontSize='9px';t2.style.cursor='pointer';
           rect.style.cursor='pointer';rect.style.strokeDasharray='4,2';
-          var xp=function(e){e.stopPropagation();expandedNodes[nPath]=(expandedNodes[nPath]||0)+2;rerender();};
+          var xp=function(e){e.stopPropagation();expandedNodes[nPath]=(expandedNodes[nPath]||0)+3;rerender();};
           rect.addEventListener('click',xp);t2.addEventListener('click',xp);
         }else if(nd.t==='s'){
           t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);t2.textContent='';
           if(sample&&onP&&sample[nd.f]!==undefined){var vt=document.createElementNS(ns,'text');vt.setAttribute('x',pos.x);vt.setAttribute('y',ry+48);vt.setAttribute('class','node-text sample-val');vt.textContent=nd.f+' = '+sample[nd.f].toFixed(3);el.appendChild(vt);}
         }else{
-          if(nd.c){var best='',bv=-1;for(var k in nd.c){if(nd.c[k]>bv){bv=nd.c[k];best=k;}}t1.textContent='🌿 Class: '+best;t2.textContent=(bv*100).toFixed(0)+'%';}
+          if(nd.c){var best='',bv=-1;for(var k in nd.c){if(nd.c[k]>bv){bv=nd.c[k];best=k;}}
+            if(IS_BOOSTED){t1.textContent='🌿 Leaf correction';var vals=[];for(var k2 in nd.c){vals.push(k2+':'+nd.c[k2].toFixed(3));}t2.textContent=vals.join(' ');}
+            else{t1.textContent='🌿 Class: '+best;t2.textContent=(bv*100).toFixed(0)+'%';}}
           else if(nd.v!==undefined){t1.textContent='🌿 '+nd.v.toFixed(4);t2.textContent='';}
         }
         el.appendChild(t1);if(t2.textContent)el.appendChild(t2);
@@ -990,68 +1129,71 @@ _JS = r"""
       }
 
       // Show badges on visible trees
+      var agg = predData.aggregation || 'avg';
       var visibleTrees = treeData.filter(function(d) { return !d.el.classList.contains('hidden'); });
       visibleTrees.forEach(function(d) {
         var pred = predictions[d.idx];
         if (!pred) return;
         var label = '';
         var color = '#1565c0';
-        if (pred.result.cls !== undefined) {
-          label = pred.result.cls;
-          // Color by class
-          var colors = ['#1565c0','#c62828','#2e7d32','#f57c00','#6a1b9a','#00838f'];
-          var classIdx = parseInt(label) || 0;
-          color = colors[classIdx % colors.length];
-        } else if (pred.result.val !== undefined) {
-          label = pred.result.val.toFixed(2);
-          color = '#333';
+        if (agg === 'sum') {
+          // Boosted: show raw correction value
+          if (pred.result.val !== undefined) {
+            label = pred.result.val.toFixed(2);
+            color = pred.result.val >= 0 ? '#2e7d32' : '#c62828';
+          } else if (pred.result.cls !== undefined && pred.result.dist) {
+            // class_distribution with single value — show the raw value
+            var vals = Object.values(pred.result.dist);
+            label = vals[0].toFixed(2);
+            color = vals[0] >= 0 ? '#2e7d32' : '#c62828';
+          }
+        } else {
+          // Vote-based: show class
+          if (pred.result.cls !== undefined) {
+            label = pred.result.cls;
+            var colors = ['#1565c0','#c62828','#2e7d32','#f57c00','#6a1b9a','#00838f'];
+            color = colors[parseInt(label) % colors.length];
+          } else if (pred.result.val !== undefined) {
+            label = pred.result.val.toFixed(2);
+            color = '#333';
+          }
         }
         if (!label) return;
 
-        // Add a badge above the tree
         var badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         badge.setAttribute('class', 'pred-label');
-        var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bg.setAttribute('x', '-18'); bg.setAttribute('y', '-165');
-        bg.setAttribute('width', '36'); bg.setAttribute('height', '16');
-        bg.setAttribute('rx', '3'); bg.setAttribute('fill', color); bg.setAttribute('opacity', '0.9');
+        var bgR = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bgR.setAttribute('x', '-18'); bgR.setAttribute('y', '-165');
+        bgR.setAttribute('width', '36'); bgR.setAttribute('height', '16');
+        bgR.setAttribute('rx', '3'); bgR.setAttribute('fill', color); bgR.setAttribute('opacity', '0.9');
         var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         txt.setAttribute('x', '0'); txt.setAttribute('y', '-153');
         txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('font-size', '10');
         txt.setAttribute('fill', 'white'); txt.setAttribute('font-weight', 'bold');
         txt.textContent = label;
-        badge.appendChild(bg); badge.appendChild(txt);
+        badge.appendChild(bgR); badge.appendChild(txt);
         d.el.appendChild(badge);
       });
 
-      // Aggregate result
+      // Aggregate result — use pre-computed model prediction if available
       var agg = predData.aggregation || 'avg';
-      if (predData.is_classifier) {
+      var modelPred = (predData.predictions && idx < predData.predictions.length) ? predData.predictions[idx] : null;
+
+      if (modelPred !== null) {
+        resultEl.innerHTML = 'Ensemble prediction: <strong>' + modelPred + '</strong>';
+      } else if (predData.is_classifier) {
         if (agg === 'sum') {
-          // Additive classifier: sum of leaf values (log-odds), show raw sum
-          var sum = 0, cnt = 0;
+          var classSums = {};
           predictions.forEach(function(p) {
-            if (p.result.val !== undefined) { sum += p.result.val; cnt++; }
-            else if (p.result.cls) { cnt++; } // has class dist but no single value
+            if (p.result.val !== undefined) { classSums['_'] = (classSums['_']||0) + p.result.val; }
+            else if (p.result.dist) { for (var k in p.result.dist) { classSums[k] = (classSums[k]||0) + p.result.dist[k]; } }
           });
-          // For additive classifiers with class_distribution, do majority vote on per-tree predictions
-          var votes = {};
-          predictions.forEach(function(p) {
-            if (p.result.cls) votes[p.result.cls] = (votes[p.result.cls]||0) + 1;
-          });
-          var best = '', bestCount = 0;
-          for (var k in votes) { if (votes[k] > bestCount) { bestCount = votes[k]; best = k; } }
-          if (best) {
-            resultEl.innerHTML = 'Ensemble prediction: <strong>' + best + '</strong> (' + bestCount + '/' + predictions.length + ' trees)';
-          } else {
-            resultEl.innerHTML = 'Ensemble sum: <strong>' + sum.toFixed(4) + '</strong> (' + cnt + ' trees)';
-          }
+          var bestCls = '', bestSum = -Infinity;
+          for (var k in classSums) { if (classSums[k] > bestSum) { bestSum = classSums[k]; bestCls = k; } }
+          resultEl.innerHTML = 'Ensemble score: <strong>' + bestSum.toFixed(3) + '</strong> (' + predictions.length + ' trees)';
         } else {
-          // Vote-based: majority vote
           var votes = {};
-          predictions.forEach(function(p) {
-            if (p.result.cls) votes[p.result.cls] = (votes[p.result.cls]||0) + 1;
-          });
+          predictions.forEach(function(p) { if (p.result.cls) votes[p.result.cls] = (votes[p.result.cls]||0) + 1; });
           var best = '', bestCount = 0;
           for (var k in votes) { if (votes[k] > bestCount) { bestCount = votes[k]; best = k; } }
           resultEl.innerHTML = 'Ensemble prediction: <strong>' + best + '</strong> (' + bestCount + '/' + predictions.length + ' votes)';

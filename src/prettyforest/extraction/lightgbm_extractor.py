@@ -80,7 +80,11 @@ class LightGBMExtractor:
             return node, 1, depth
 
         split_feature_idx = node_dict["split_feature"]
-        feature_name = feature_names[split_feature_idx] if isinstance(split_feature_idx, int) else str(split_feature_idx)
+        feature_name = (
+            feature_names[split_feature_idx]
+            if isinstance(split_feature_idx, int)
+            else str(split_feature_idx)
+        )
         threshold = float(node_dict["threshold"])
         decision_type = node_dict.get("decision_type", "<=")
         comparison_op = self._parse_comparison_op(decision_type)

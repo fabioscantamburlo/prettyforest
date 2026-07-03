@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
 
 from prettyforest.models import ComparisonOp, UnifiedNode, UnifiedTree
 
@@ -16,6 +15,15 @@ class SklearnExtractor:
         is_classifier = self._is_classifier(model)
         feature_names = self._get_feature_names(model, estimators[0])
         class_names = self._get_class_names(model) if is_classifier else None
+
+        # For GradientBoosting classifiers, individual trees predict residuals (not classes)
+        is_gbm = hasattr(model, "estimators_") and hasattr(model.estimators_, "ravel")
+        if is_gbm and is_classifier:
+            # Each sub-tree is a regressor (gradient for one class)
+            return [
+                self._extract_single(est, feature_names, False, None)
+                for est in estimators
+            ]
 
         return [
             self._extract_single(est, feature_names, is_classifier, class_names)
@@ -125,10 +133,18 @@ class SklearnExtractor:
 
         # Internal node
         threshold = float(tree.threshold[node_idx])
-        fname = feature_names[feature_idx] if feature_idx < len(feature_names) else f"feature_{feature_idx}"
+        fname = (
+            feature_names[feature_idx]
+            if feature_idx < len(feature_names)
+            else f"feature_{feature_idx}"
+        )
 
-        left = self._build_node(tree, left_child_idx, depth + 1, feature_names, is_classifier, class_names)
-        right = self._build_node(tree, right_child_idx, depth + 1, feature_names, is_classifier, class_names)
+        left = self._build_node(
+            tree, left_child_idx, depth + 1, feature_names, is_classifier, class_names
+        )
+        right = self._build_node(
+            tree, right_child_idx, depth + 1, feature_names, is_classifier, class_names
+        )
 
         return UnifiedNode(
             node_id=str(node_idx),

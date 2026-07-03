@@ -95,8 +95,13 @@ class CatBoostExtractor:
 
             if level == depth:
                 return self._make_leaf(
-                    node_id, level, leaf_values, leaf_offset,
-                    is_classifier, n_classes, values_per_leaf,
+                    node_id,
+                    level,
+                    leaf_values,
+                    leaf_offset,
+                    is_classifier,
+                    n_classes,
+                    values_per_leaf,
                 )
 
             split = splits_root_first[level]

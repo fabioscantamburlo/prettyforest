@@ -63,7 +63,9 @@ def deserialize(json_str: str) -> UnifiedTree:
     try:
         data = json.loads(json_str)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to deserialize tree: invalid JSON at line {e.lineno} column {e.colno}: {e.msg}") from e
+        raise ValueError(
+            f"Failed to deserialize tree: invalid JSON at line {e.lineno} column {e.colno}: {e.msg}"
+        ) from e
 
     if not isinstance(data, dict) or "tree" not in data:
         raise ValueError("Failed to deserialize tree: missing required field 'tree'")
@@ -71,7 +73,9 @@ def deserialize(json_str: str) -> UnifiedTree:
     tree_data = data["tree"]
     for field in ("node_count", "max_depth", "is_classifier", "feature_names", "root"):
         if field not in tree_data:
-            raise ValueError(f"Failed to deserialize tree: missing required field '{field}'")
+            raise ValueError(
+                f"Failed to deserialize tree: missing required field '{field}'"
+            )
 
     root = _deserialize_node(tree_data["root"])
 
@@ -88,7 +92,9 @@ def deserialize(json_str: str) -> UnifiedTree:
 def _deserialize_node(data: dict) -> UnifiedNode:
     for field in ("node_id", "type", "depth"):
         if field not in data:
-            raise ValueError(f"Failed to deserialize tree: missing required field '{field}' in node")
+            raise ValueError(
+                f"Failed to deserialize tree: missing required field '{field}' in node"
+            )
 
     node_type = data["type"]
     if node_type not in _VALID_NODE_TYPES:
@@ -105,11 +111,15 @@ def _deserialize_node(data: dict) -> UnifiedNode:
     # Internal node
     for field in ("feature_name", "threshold", "comparison_op", "left", "right"):
         if field not in data:
-            raise ValueError(f"Failed to deserialize tree: missing required field '{field}' in internal node '{data['node_id']}'")
+            raise ValueError(
+                f"Failed to deserialize tree: missing required field '{field}' in internal node '{data['node_id']}'"
+            )
 
     op_str = data["comparison_op"]
     if op_str not in _VALID_OPS:
-        raise ValueError(f"Failed to deserialize tree: unknown comparison operator '{op_str}'")
+        raise ValueError(
+            f"Failed to deserialize tree: unknown comparison operator '{op_str}'"
+        )
 
     return UnifiedNode(
         node_id=data["node_id"],

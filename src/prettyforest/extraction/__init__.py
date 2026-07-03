@@ -40,7 +40,9 @@ class TreeExtractorRegistry:
         extractor = self._extractors[framework]
 
         if not extractor.is_fitted(model):
-            msg = "Model must be fitted before visualization. Call model.fit(X, y) first."
+            msg = (
+                "Model must be fitted before visualization. Call model.fit(X, y) first."
+            )
             raise ValueError(msg)
 
         trees = extractor.extract(model)

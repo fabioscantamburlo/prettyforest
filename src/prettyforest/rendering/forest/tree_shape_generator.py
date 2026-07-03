@@ -73,9 +73,7 @@ def _generate_branches(
         cp_x = end_x * 0.5 + rng.uniform(-3, 3)
         cp_y = end_y * 0.6
 
-        branches.append(
-            f"M 0,0 Q {cp_x:.1f},{cp_y:.1f} {end_x:.1f},{end_y:.1f}"
-        )
+        branches.append(f"M 0,0 Q {cp_x:.1f},{cp_y:.1f} {end_x:.1f},{end_y:.1f}")
 
     return branches
 

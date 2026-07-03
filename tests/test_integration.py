@@ -3,7 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import numpy as np
 import polars as pl
 import pytest
 from catboost import CatBoostClassifier

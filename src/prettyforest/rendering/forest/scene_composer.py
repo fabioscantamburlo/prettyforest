@@ -66,14 +66,30 @@ class SceneComposer:
             f'id="forest-svg">'
         )
         parts.append("<title>PrettyForest — Aesthetic Forest View</title>")
-        parts.append(self._build_defs(ground_color, ground_dark, sky_color, config.season))
+        parts.append(
+            self._build_defs(ground_color, ground_dark, sky_color, config.season)
+        )
 
         # Sky + ground
-        parts.append(f'<rect x="0" y="0" width="{width}" height="{height}" fill="url(#sky-gradient)"/>')
-        parts.append(self._render_ground(width, height, ground_top, ground_bottom, ground_color, rng, config.season))
+        parts.append(
+            f'<rect x="0" y="0" width="{width}" height="{height}" fill="url(#sky-gradient)"/>'
+        )
+        parts.append(
+            self._render_ground(
+                width,
+                height,
+                ground_top,
+                ground_bottom,
+                ground_color,
+                rng,
+                config.season,
+            )
+        )
 
         # Compute positions for ALL trees (using visible_n worth of space, cycling positions)
-        positions = self._compute_placements(visible_n, width, ground_top, ground_bottom, rng)
+        positions = self._compute_placements(
+            visible_n, width, ground_top, ground_bottom, rng
+        )
 
         # Render all trees — first MAX_VISIBLE are visible, rest are hidden
         # Sort visible set back to front for proper overlap
@@ -84,17 +100,35 @@ class SceneComposer:
             depth_t = (y - ground_top) / ground_h if ground_h > 0 else 0.5
             scale = MIN_SCALE + depth_t * (MAX_SCALE - MIN_SCALE)
             meta = tree_metas[i] if i < len(tree_metas) else None
-            parts.append(self._render_tree(
-                tree_paths[i], tree_visuals[i], x, y, scale, config.season, meta, hidden=False
-            ))
+            parts.append(
+                self._render_tree(
+                    tree_paths[i],
+                    tree_visuals[i],
+                    x,
+                    y,
+                    scale,
+                    config.season,
+                    meta,
+                    hidden=False,
+                )
+            )
 
         # Render remaining trees as hidden (no position needed, they'll be placed by JS when paged in)
         for i in range(visible_n, n):
             meta = tree_metas[i] if i < len(tree_metas) else None
             # Place at 0,0 hidden — JS will assign position when paged in
-            parts.append(self._render_tree(
-                tree_paths[i], tree_visuals[i], 0, 0, 0.6, config.season, meta, hidden=True
-            ))
+            parts.append(
+                self._render_tree(
+                    tree_paths[i],
+                    tree_visuals[i],
+                    0,
+                    0,
+                    0.6,
+                    config.season,
+                    meta,
+                    hidden=True,
+                )
+            )
 
         # Legend (info button)
         parts.append(self._render_legend(width))
@@ -108,7 +142,9 @@ class SceneComposer:
         factor = max(1.0, math.sqrt(n / 25))
         return int(base_w * factor), int(base_h * min(factor, 2.0))
 
-    def _build_defs(self, ground_color: str, ground_dark: str, sky_color: str, season: str | None) -> str:
+    def _build_defs(
+        self, ground_color: str, ground_dark: str, sky_color: str, season: str | None
+    ) -> str:
         return (
             "<defs>"
             '<linearGradient id="sky-gradient" x1="0%" y1="0%" x2="0%" y2="100%">'
@@ -131,8 +167,14 @@ class SceneComposer:
         )
 
     def _render_ground(
-        self, width: int, height: int, ground_top: float, ground_bottom: float,
-        ground_color: str, rng: random.Random, season: str | None
+        self,
+        width: int,
+        height: int,
+        ground_top: float,
+        ground_bottom: float,
+        ground_color: str,
+        rng: random.Random,
+        season: str | None,
     ) -> str:
         parts: list[str] = []
         parts.append(
@@ -158,7 +200,12 @@ class SceneComposer:
         return "\n".join(parts)
 
     def _compute_placements(
-        self, n: int, width: int, ground_top: float, ground_bottom: float, rng: random.Random
+        self,
+        n: int,
+        width: int,
+        ground_top: float,
+        ground_bottom: float,
+        rng: random.Random,
     ) -> list[tuple[float, float]]:
         if n == 0:
             return []
@@ -205,8 +252,15 @@ class SceneComposer:
         return placements
 
     def _render_tree(
-        self, paths: TreePaths, visuals: TreeVisuals, x: float, y: float,
-        scale: float, season: str | None, meta: TreeMeta | None, hidden: bool = False,
+        self,
+        paths: TreePaths,
+        visuals: TreeVisuals,
+        x: float,
+        y: float,
+        scale: float,
+        season: str | None,
+        meta: TreeMeta | None,
+        hidden: bool = False,
     ) -> str:
         data_attrs = ""
         if meta:
@@ -233,10 +287,14 @@ class SceneComposer:
 
         shadow_rx = visuals.trunk_width * 1.8
         shadow_ry = shadow_rx * 0.35
-        parts.append(f'<ellipse cx="0" cy="4" rx="{shadow_rx:.1f}" ry="{shadow_ry:.1f}" fill="rgba(0,0,0,0.15)"/>')
+        parts.append(
+            f'<ellipse cx="0" cy="4" rx="{shadow_rx:.1f}" ry="{shadow_ry:.1f}" fill="rgba(0,0,0,0.15)"/>'
+        )
 
         trunk_color = "#5D4037" if season != "winter" else "#696969"
-        parts.append(f'<path class="trunk" d="{paths.trunk}" fill="{trunk_color}" stroke="#3E2723" stroke-width="0.5"/>')
+        parts.append(
+            f'<path class="trunk" d="{paths.trunk}" fill="{trunk_color}" stroke="#3E2723" stroke-width="0.5"/>'
+        )
 
         branch_color = "#795548" if season != "winter" else "#808080"
         branch_width = max(1.5, visuals.trunk_width * 0.2)
