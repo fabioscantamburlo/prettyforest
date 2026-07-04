@@ -2,6 +2,10 @@
 
 Interactive 2.5D forest visualization for tree-based ML ensembles. Explore your model's structure, trace predictions through individual trees, and understand how the ensemble makes decisions.
 
+<p align="center">
+  <img src="assets/demo.gif" alt="PrettyForest Demo" width="700"/>
+</p>
+
 ## Features
 
 - **2.5D isometric forest** — trees rendered with depth perspective, growth animation, seasonal themes
@@ -87,6 +91,28 @@ visualize(
 | **?** | Model description + how the ensemble works |
 | **Trace** | Show per-tree badges + ensemble prediction + true label |
 | **Click a truncated node** | Expand that subtree 3 more levels |
+
+## Seasons & Themes
+
+Switch the visual theme live in the browser or set it via Python:
+
+```python
+visualize(model, season="spring")   # 🌸 Light greens + pink blossoms
+visualize(model, season="summer")   # 🌿 Deep lush greens
+visualize(model, season="autumn")   # 🍂 Warm oranges, reds, golds
+visualize(model, season="winter")   # ❄️ Bare branches, blue-grey
+visualize(model)                    # 🌳 Natural (metric-based coloring)
+```
+
+You can also switch seasons on the fly using the dropdown in the header — no need to re-run Python. The canopies, ground, sky, and grass patches all update instantly.
+
+| Season | Canopy colors | Ground | Best for |
+|--------|--------------|--------|----------|
+| 🌳 Natural | Green→amber by metric | Soft green | Analysis (purity/variance encoded in color) |
+| 🌸 Spring | Light green + pink/purple | Fresh green | Presentations |
+| 🌿 Summer | Deep forest greens | Rich green | Dense forests |
+| 🍂 Autumn | Orange, red, gold | Warm brown | Warm aesthetics |
+| ❄️ Winter | Bare (no canopy) | Blue-grey | Seeing structure clearly |
 
 ## Prediction Display
 

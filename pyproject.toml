@@ -25,6 +25,7 @@ dev = [
     "ipython>=8.0.0",
     "pytest>=8.0.0",
     "marimo>=0.23.13",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.setuptools.packages.find]

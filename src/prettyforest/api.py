@@ -68,7 +68,7 @@ def visualize(
         elif isinstance(target, pl.Series):
             target_list = target.to_list()
         else:
-            target_list = list(target)
+            target_list = [int(x) if hasattr(x, "item") else x for x in target]
 
     # Extract boosting metadata for correct prediction aggregation
     boosting_meta = _extract_boosting_meta(model)
