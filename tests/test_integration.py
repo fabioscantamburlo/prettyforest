@@ -58,6 +58,15 @@ class TestForestVisualization:
         assert "predict-panel" in html
         assert "predict-data" in html
 
+    def test_predict_panel_has_close_button(self, cls_data):
+        X, y = cls_data
+        model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
+        model.fit(X, y)
+        df = pl.DataFrame({f"feature_{i}": X[:, i] for i in range(4)})
+
+        html = visualize(model, data=df)
+        assert "predict-close" in html
+
     def test_without_data_no_predict_panel(self, cls_data):
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)

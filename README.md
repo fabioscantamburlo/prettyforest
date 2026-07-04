@@ -15,7 +15,7 @@ Interactive 2.5D forest visualization for tree-based ML ensembles. Explore your 
 - **Interactive detail view** — double-click a tree to drill into its decision structure with per-node expansion
 - **Boosted tree awareness** — correct display of gradient corrections vs class probabilities, with explanatory notes
 - **Dark mode** — toggle with 🌙 button
-- **Scales to thousands** — pagination, sorting, highlighting for large ensembles
+- **Scales to thousands** — pagination, sorting, spotlighting for large ensembles
 
 ## Installation
 
@@ -86,7 +86,6 @@ visualize(
 | **Double-click** a tree | Full decision structure with per-node expand |
 | **Sort by** dropdown | Rearrange into grid by depth/nodes/leaves/metric |
 | **◀ ▶** | Page through large ensembles (200/page) |
-| **Top 3 / Bottom 3** | Show only best/worst trees by metric |
 | **🌙** | Toggle dark mode |
 | **?** | Model description + how the ensemble works |
 | **Trace** | Show per-tree badges + ensemble prediction + true label |
