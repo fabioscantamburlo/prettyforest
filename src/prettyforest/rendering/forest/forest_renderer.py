@@ -385,36 +385,36 @@ _CSS = """\
 body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f2f6f2; height: 100vh; overflow: hidden; display: flex; flex-direction: column; color: #2e3d30; }
 
 /* Glassmorphism base classes */
-.header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 12px 24px; 
-    background: rgba(255, 255, 255, 0.75); 
-    backdrop-filter: blur(12px); 
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     z-index: 100;
 }
 .header h2 { font-size: 18px; font-weight: 600; color: #1c281e; letter-spacing: -0.02em; }
 
 .zoom-controls { display: flex; align-items: center; gap: 8px; }
-.zoom-controls button { 
-    width: 32px; 
-    height: 32px; 
-    border: 1px solid rgba(0, 0, 0, 0.12); 
-    border-radius: 8px; 
-    background: rgba(255, 255, 255, 0.8); 
-    font-size: 15px; 
-    cursor: pointer; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
+.zoom-controls button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.zoom-controls button:hover { 
-    background: #e8f5e9; 
-    border-color: #4caf50; 
+.zoom-controls button:hover {
+    background: #e8f5e9;
+    border-color: #4caf50;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
 }
@@ -423,25 +423,25 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 }
 #zoom-level { font-size: 12px; color: #667568; min-width: 65px; font-weight: 500; text-align: center; }
 
-.toolbar { 
-    display: flex; 
-    align-items: center; 
-    gap: 20px; 
-    padding: 8px 24px; 
-    background: rgba(255, 255, 255, 0.65); 
-    backdrop-filter: blur(10px); 
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 24px;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06); 
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     flex-wrap: wrap;
     z-index: 90;
 }
 .tool-group { display: flex; align-items: center; gap: 8px; }
 .tool-group label { font-size: 12px; color: #556256; font-weight: 600; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em; }
-.tool-group select { 
-    padding: 4px 10px; 
-    border: 1px solid rgba(0, 0, 0, 0.15); 
-    border-radius: 6px; 
-    font-size: 12px; 
+.tool-group select {
+    padding: 4px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    font-size: 12px;
     background: rgba(255, 255, 255, 0.9);
     font-family: inherit;
     font-weight: 500;
@@ -454,20 +454,20 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 }
 #page-info { font-size: 12px; font-weight: 600; color: #2e3d30; min-width: 95px; text-align: center; }
 
-.tool-btn { 
-    padding: 4px 12px; 
-    border: 1px solid rgba(0, 0, 0, 0.12); 
-    border-radius: 6px; 
-    font-size: 12px; 
+.tool-btn {
+    padding: 4px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    font-size: 12px;
     font-family: inherit;
     font-weight: 500;
-    background: rgba(255, 255, 255, 0.85); 
-    cursor: pointer; 
+    background: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.tool-btn:hover { 
-    background: #e8f5e9; 
-    border-color: #4caf50; 
+.tool-btn:hover {
+    background: #e8f5e9;
+    border-color: #4caf50;
     transform: translateY(-1px);
 }
 .tool-btn:active {
@@ -476,60 +476,60 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 .tool-btn.active { background: #c8e6c9; border-color: #4caf50; color: #1b5e20; }
 .tool-btn:disabled { opacity: 0.4; cursor: default; transform: none !important; box-shadow: none !important; }
 
-.spotlight-panel { 
-    position: fixed; 
-    top: 120px; 
-    right: 20px; 
-    width: 280px; 
-    background: rgba(255, 255, 255, 0.75); 
-    backdrop-filter: blur(16px); 
+.spotlight-panel {
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    width: 280px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-radius: 16px; 
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); 
-    padding: 20px; 
-    display: none; 
-    z-index: 500; 
-    border: 1px solid rgba(255, 255, 255, 0.5); 
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    display: none;
+    z-index: 500;
+    border: 1px solid rgba(255, 255, 255, 0.5);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .spotlight-panel.visible { display: block; }
-#spotlight-close { 
-    position: absolute; 
-    top: 12px; 
-    right: 14px; 
-    border: none; 
-    background: none; 
-    font-size: 18px; 
-    cursor: pointer; 
-    color: #888; 
+#spotlight-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    border: none;
+    background: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #888;
     transition: color 0.2s;
 }
 #spotlight-close:hover { color: #1c281e; }
 #spotlight-content { font-size: 13px; line-height: 1.8; }
 #spotlight-content strong { font-size: 15px; font-weight: 700; display: block; margin-bottom: 8px; color: #1c281e; }
 .stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.04); }
-.stat-label { color: #556256; font-weight: 400; } 
+.stat-label { color: #556256; font-weight: 400; }
 .stat-value { font-weight: 600; color: #1c281e; }
 
 .forest-container { width: 100%; flex: 1; min-height: 0; overflow: hidden; position: relative; }
 .forest-container svg { display: block; width: 100%; height: 100%; cursor: grab; transition: transform 0.15s ease; }
 .forest-container svg:active { cursor: grabbing; }
 
-.tooltip { 
-    position: fixed; 
-    display: none; 
-    background: rgba(20, 28, 21, 0.88); 
+.tooltip {
+    position: fixed;
+    display: none;
+    background: rgba(20, 28, 21, 0.88);
     backdrop-filter: blur(8px);
-    color: #f5fcf6; 
-    padding: 12px 16px; 
-    border-radius: 12px; 
-    font-size: 13px; 
-    line-height: 1.7; 
-    pointer-events: none; 
-    z-index: 1000; 
-    max-width: 260px; 
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
-    border: 1px solid rgba(255, 255, 255, 0.12); 
+    color: #f5fcf6;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 260px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .visual-tree { cursor: pointer; transition: opacity 0.3s, filter 0.3s, transform 0.6s ease; }
@@ -546,16 +546,16 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 .visual-tree .canopy { opacity: 0; transform: scale(0); transform-origin: center 40%; }
 .visual-tree.grow-canopy .canopy { opacity: 0.9; transform: scale(1); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease; }
 
-.predict-panel { 
-    padding: 10px 24px; 
-    background: rgba(255, 255, 255, 0.7); 
+.predict-panel {
+    padding: 10px 24px;
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
-    display: flex; 
-    align-items: center; 
-    gap: 12px; 
-    flex-wrap: wrap; 
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
     z-index: 80;
 }
 .predict-header { display: flex; align-items: center; gap: 8px; }
@@ -564,11 +564,11 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 #predict-close:hover { color: #1c281e; }
 .predict-body { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .predict-body label { font-size: 12px; color: #556256; font-weight: 500; }
-.predict-body input { 
-    padding: 4px 8px; 
-    border: 1px solid rgba(0, 0, 0, 0.15); 
-    border-radius: 6px; 
-    font-size: 12px; 
+.predict-body input {
+    padding: 4px 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    font-size: 12px;
     font-family: inherit;
     background: rgba(255, 255, 255, 0.9);
     outline: none;
@@ -580,40 +580,40 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 .predict-badge { font-size: 9px; font-weight: bold; fill: white; }
 .predict-badge-bg { rx: 3; }
 
-.detail-modal { 
-    display: none; 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background: rgba(240, 244, 240, 0.85); 
+.detail-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(240, 244, 240, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    z-index: 2000; 
-    flex-direction: column; 
+    z-index: 2000;
+    flex-direction: column;
 }
 .detail-modal.open { display: flex; }
-.detail-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 16px 24px; 
-    border-bottom: 1px solid rgba(200, 230, 201, 0.5); 
-    background: rgba(232, 245, 233, 0.5); 
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(200, 230, 201, 0.5);
+    background: rgba(232, 245, 233, 0.5);
 }
 .detail-header span { font-size: 16px; font-weight: 600; color: #2e7d32; }
 #detail-close { border: none; background: none; font-size: 26px; cursor: pointer; color: #888; padding: 4px 8px; transition: color 0.2s; }
 #detail-close:hover { color: #1c281e; }
 
-.detail-body { 
-    flex: 1; 
-    overflow: auto; 
-    padding: 24px; 
-    display: flex; 
-    justify-content: center; 
-    cursor: grab; 
-    background: radial-gradient(ellipse at center, rgba(249, 253, 249, 0.5) 0%, rgba(238, 245, 238, 0.5) 100%); 
+.detail-body {
+    flex: 1;
+    overflow: auto;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    cursor: grab;
+    background: radial-gradient(ellipse at center, rgba(249, 253, 249, 0.5) 0%, rgba(238, 245, 238, 0.5) 100%);
 }
 .detail-body svg { height: auto; cursor: grab; }
 .detail-body svg:active { cursor: grabbing; }
@@ -631,14 +631,14 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 .detail-body .edge-label { font-size: 11px; fill: #5D4037; text-anchor: middle; font-weight: 600; }
 .detail-body .edge-label.dimmed { opacity: 0.15; }
 
-.sample-display { 
-    display: none; 
-    padding: 8px 24px; 
-    background: rgba(245,248,245,0.7); 
+.sample-display {
+    display: none;
+    padding: 8px 24px;
+    background: rgba(245,248,245,0.7);
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05); 
-    overflow-x: auto; 
-    white-space: nowrap; 
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    white-space: nowrap;
 }
 .sample-display.visible { display: block; }
 .sample-display .sample-title { font-size: 12px; font-weight: 600; color: #1c281e; margin-bottom: 6px; display: block; }
@@ -647,13 +647,13 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 .sample-display .chip .chip-name { color: #556256; }
 .sample-display .chip .chip-val { color: #1565c0; font-weight: 600; margin-left: 4px; }
 
-.detail-sample { 
-    padding: 8px 24px; 
-    background: rgba(232, 245, 233, 0.4); 
-    border-bottom: 1px solid rgba(200, 230, 201, 0.4); 
-    overflow-x: auto; 
-    white-space: nowrap; 
-    display: none; 
+.detail-sample {
+    padding: 8px 24px;
+    background: rgba(232, 245, 233, 0.4);
+    border-bottom: 1px solid rgba(200, 230, 201, 0.4);
+    overflow-x: auto;
+    white-space: nowrap;
+    display: none;
 }
 .detail-sample.visible { display: block; }
 .detail-sample .sample-chips { display: flex; gap: 8px; }
@@ -664,22 +664,22 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 .detail-note { padding: 6px 24px; font-size: 12px; color: #e65100; background: rgba(255, 248, 225, 0.6); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255, 224, 130, 0.5); display: none; }
 .detail-note.visible { display: block; }
 
-.model-info-panel { 
-    position: fixed; 
-    top: 80px; 
-    left: 50%; 
-    transform: translateX(-50%); 
-    width: 520px; 
-    max-width: 90vw; 
-    background: rgba(255, 255, 255, 0.85); 
-    backdrop-filter: blur(18px); 
+.model-info-panel {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 520px;
+    max-width: 90vw;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
-    border-radius: 16px; 
-    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.1); 
-    padding: 24px; 
-    display: none; 
-    z-index: 600; 
-    border: 1px solid rgba(255, 255, 255, 0.5); 
+    border-radius: 16px;
+    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    display: none;
+    z-index: 600;
+    border: 1px solid rgba(255, 255, 255, 0.5);
     transition: all 0.3s ease;
 }
 .model-info-panel.visible { display: block; }
@@ -692,89 +692,89 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 
 /* Dark mode */
 body.dark { background: #0b0b14; color: #cfd8d0; }
-body.dark .header { 
-    background: rgba(15, 15, 28, 0.75); 
-    border-color: rgba(255, 255, 255, 0.06); 
+body.dark .header {
+    background: rgba(15, 15, 28, 0.75);
+    border-color: rgba(255, 255, 255, 0.06);
 }
 body.dark .header h2 { color: #ecf3ed; }
 
-body.dark .zoom-controls button { 
-    background: rgba(255, 255, 255, 0.08); 
-    color: #e0e0e0; 
-    border-color: rgba(255, 255, 255, 0.08); 
+body.dark .zoom-controls button {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e0e0e0;
+    border-color: rgba(255, 255, 255, 0.08);
 }
-body.dark .zoom-controls button:hover { 
-    background: rgba(76, 175, 80, 0.2); 
-    border-color: #66bb6a; 
+body.dark .zoom-controls button:hover {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #66bb6a;
 }
 body.dark #zoom-level { color: #9bb09e; }
 
-body.dark .toolbar { 
-    background: rgba(15, 15, 28, 0.65); 
-    border-color: rgba(255, 255, 255, 0.05); 
+body.dark .toolbar {
+    background: rgba(15, 15, 28, 0.65);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 body.dark .toolbar label { color: #9bb09e; }
-body.dark .toolbar select { 
-    background: rgba(255, 255, 255, 0.08); 
-    color: #e0e0e0; 
-    border-color: rgba(255, 255, 255, 0.08); 
+body.dark .toolbar select {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e0e0e0;
+    border-color: rgba(255, 255, 255, 0.08);
 }
 body.dark .toolbar select:focus {
     border-color: #66bb6a;
 }
 body.dark #page-info { color: #ecf3ed; }
 
-body.dark .tool-btn { 
-    background: rgba(255, 255, 255, 0.08); 
-    color: #e0e0e0; 
-    border-color: rgba(255, 255, 255, 0.08); 
+body.dark .tool-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e0e0e0;
+    border-color: rgba(255, 255, 255, 0.08);
 }
-body.dark .tool-btn:hover { 
-    background: rgba(76, 175, 80, 0.2); 
-    border-color: #66bb6a; 
+body.dark .tool-btn:hover {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #66bb6a;
 }
-body.dark .tool-btn.active { 
-    background: rgba(76, 175, 80, 0.3); 
-    border-color: #66bb6a; 
-    color: #a5d6a7; 
+body.dark .tool-btn.active {
+    background: rgba(76, 175, 80, 0.3);
+    border-color: #66bb6a;
+    color: #a5d6a7;
 }
 
-body.dark .predict-panel { 
-    background: rgba(15, 15, 28, 0.7); 
-    border-color: rgba(255, 255, 255, 0.05); 
+body.dark .predict-panel {
+    background: rgba(15, 15, 28, 0.7);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 body.dark .predict-panel label { color: #9bb09e; }
-body.dark .predict-panel input { 
-    background: rgba(255, 255, 255, 0.08); 
-    color: #e0e0e0; 
-    border-color: rgba(255, 255, 255, 0.08); 
+body.dark .predict-panel input {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e0e0e0;
+    border-color: rgba(255, 255, 255, 0.08);
 }
 body.dark .predict-panel input:focus { border-color: #66bb6a; }
 body.dark #predict-result { color: #ecf3ed; }
 body.dark #predict-result strong { color: #64b5f6; }
 
-body.dark .sample-display { 
-    background: rgba(15, 15, 28, 0.75); 
-    border-color: rgba(255, 255, 255, 0.05); 
+body.dark .sample-display {
+    background: rgba(15, 15, 28, 0.75);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 body.dark .sample-display .sample-title { color: #ecf3ed; }
-body.dark .sample-display .chip { 
-    background: rgba(255, 255, 255, 0.05); 
-    border-color: rgba(255, 255, 255, 0.08); 
+body.dark .sample-display .chip {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 body.dark .sample-display .chip .chip-name { color: #9bb09e; }
 body.dark .sample-display .chip .chip-val { color: #64b5f6; }
 
-body.dark .tooltip { 
-    background: rgba(15, 15, 28, 0.9); 
-    border-color: rgba(255, 255, 255, 0.12); 
+body.dark .tooltip {
+    background: rgba(15, 15, 28, 0.9);
+    border-color: rgba(255, 255, 255, 0.12);
     color: #ecf3ed;
 }
 
-body.dark .spotlight-panel { 
-    background: rgba(15, 15, 28, 0.8); 
-    border-color: rgba(255, 255, 255, 0.08); 
-    color: #cfd8d0; 
+body.dark .spotlight-panel {
+    background: rgba(15, 15, 28, 0.8);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #cfd8d0;
     box-shadow: 0 12px 50px rgba(0, 0, 0, 0.25);
 }
 body.dark #spotlight-close:hover { color: #ecf3ed; }
@@ -783,40 +783,40 @@ body.dark .stat-row { border-color: rgba(255, 255, 255, 0.05); }
 body.dark .stat-label { color: #9bb09e; }
 body.dark .stat-value { color: #ecf3ed; }
 
-body.dark .detail-modal { 
-    background: rgba(10, 10, 18, 0.88); 
+body.dark .detail-modal {
+    background: rgba(10, 10, 18, 0.88);
 }
-body.dark .detail-header { 
-    background: rgba(15, 30, 20, 0.5); 
-    border-color: rgba(255, 255, 255, 0.05); 
+body.dark .detail-header {
+    background: rgba(15, 30, 20, 0.5);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 body.dark .detail-header span { color: #81c784; }
 body.dark #detail-close:hover { color: #ecf3ed; }
 
-body.dark .detail-body { 
-    background: radial-gradient(ellipse at center, rgba(15, 25, 15, 0.5) 0%, rgba(10, 10, 15, 0.5) 100%); 
+body.dark .detail-body {
+    background: radial-gradient(ellipse at center, rgba(15, 25, 15, 0.5) 0%, rgba(10, 10, 15, 0.5) 100%);
 }
-body.dark .detail-sample { 
-    background: rgba(15, 30, 20, 0.4); 
-    border-color: rgba(255, 255, 255, 0.05); 
+body.dark .detail-sample {
+    background: rgba(15, 30, 20, 0.4);
+    border-color: rgba(255, 255, 255, 0.05);
 }
-body.dark .detail-sample .chip { 
-    background: rgba(255, 255, 255, 0.05); 
-    border-color: rgba(255, 255, 255, 0.08); 
+body.dark .detail-sample .chip {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 body.dark .detail-sample .chip .chip-name { color: #81c784; }
 body.dark .detail-sample .chip .chip-val { color: #64b5f6; }
 
-body.dark .detail-note { 
-    color: #ffb74d; 
-    background: rgba(255, 183, 77, 0.08); 
-    border-color: rgba(255, 183, 77, 0.15); 
+body.dark .detail-note {
+    color: #ffb74d;
+    background: rgba(255, 183, 77, 0.08);
+    border-color: rgba(255, 183, 77, 0.15);
 }
 
-body.dark .model-info-panel { 
-    background: rgba(15, 15, 28, 0.85); 
-    border-color: rgba(255, 255, 255, 0.08); 
-    color: #cfd8d0; 
+body.dark .model-info-panel {
+    background: rgba(15, 15, 28, 0.85);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #cfd8d0;
     box-shadow: 0 15px 60px rgba(0, 0, 0, 0.3);
 }
 body.dark #info-panel-close:hover { color: #ecf3ed; }
