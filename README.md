@@ -166,7 +166,7 @@ The splits and features are fully interpretable — they show which features mat
 ## Development
 
 ```bash
-git clone https://github.com/youruser/prettyforest.git
+git clone https://github.com/fabioscantamburlo/prettyforest.git
 cd prettyforest
 uv sync
 
