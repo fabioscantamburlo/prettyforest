@@ -33,7 +33,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 import polars as pl
-from prettyforest import visualize
+from prettyforest import prettygrow
 
 # Train
 iris = load_iris()
@@ -45,15 +45,15 @@ model.fit(X_train, y_train)
 
 # Visualize
 X_test_pl = pl.DataFrame({name: X_test[:, i] for i, name in enumerate(iris.feature_names)})
-visualize(model, data=X_test_pl, target=y_test, output_path="forest.html")
+prettygrow(model, data=X_test_pl, target=y_test, output_path="forest.html")
 ```
 
 ## API
 
 ```python
-from prettyforest import visualize
+from prettyforest import prettygrow
 
-visualize(
+prettygrow(
     model,              # Trained tree model (sklearn, LightGBM, or CatBoost)
     *,
     data=None,          # Polars DataFrame or NumPy array for prediction tracing
@@ -96,11 +96,11 @@ visualize(
 Switch the visual theme live in the browser or set it via Python:
 
 ```python
-visualize(model, season="spring")   # 🌸 Light greens + pink blossoms
-visualize(model, season="summer")   # 🌿 Deep lush greens
-visualize(model, season="autumn")   # 🍂 Warm oranges, reds, golds
-visualize(model, season="winter")   # ❄️ Bare branches, blue-grey
-visualize(model)                    # 🌳 Natural (metric-based coloring)
+prettygrow(model, season="spring")   # 🌸 Light greens + pink blossoms
+prettygrow(model, season="summer")   # 🌿 Deep lush greens
+prettygrow(model, season="autumn")   # 🍂 Warm oranges, reds, golds
+prettygrow(model, season="winter")   # ❄️ Bare branches, blue-grey
+prettygrow(model)                    # 🌳 Natural (metric-based coloring)
 ```
 
 You can also switch seasons on the fly using the dropdown in the header — no need to re-run Python. The canopies, ground, sky, and grass patches all update instantly.
@@ -130,14 +130,14 @@ import marimo as mo
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import load_iris
 import polars as pl
-from prettyforest import visualize
+from prettyforest import prettygrow
 
 iris = load_iris()
 model = RandomForestClassifier(n_estimators=20, max_depth=5, random_state=42)
 model.fit(iris.data, iris.target)
 
 X_pl = pl.DataFrame({name: iris.data[:, i] for i, name in enumerate(iris.feature_names)})
-html = visualize(model, data=X_pl, target=iris.target)
+html = prettygrow(model, data=X_pl, target=iris.target)
 mo.iframe(html, height="700px")
 ```
 
@@ -146,9 +146,9 @@ Use `mo.iframe()` (not `mo.Html()`) — PrettyForest needs JavaScript execution 
 ## Jupyter Integration
 
 ```python
-from prettyforest import visualize
+from prettyforest import prettygrow
 # ... train model ...
-visualize(model, data=X_test)  # auto-displays via IPython.display.HTML
+prettygrow(model, data=X_test)  # auto-displays via IPython.display.HTML
 ```
 
 ## Understanding Boosted vs Bagged Trees

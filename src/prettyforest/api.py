@@ -13,7 +13,7 @@ from prettyforest.extraction import TreeExtractorRegistry
 from prettyforest.models import EnsembleType
 
 
-def visualize(
+def prettygrow(
     model: Any,
     *,
     data: pl.DataFrame | np.ndarray | None = None,

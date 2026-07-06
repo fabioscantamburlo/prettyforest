@@ -11,7 +11,7 @@ def _():
     from sklearn.model_selection import train_test_split
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
     import polars as pl
-    from prettyforest import visualize
+    from prettyforest import prettygrow
 
     return (
         GradientBoostingClassifier,
@@ -20,7 +20,7 @@ def _():
         mo,
         pl,
         train_test_split,
-        visualize,
+        prettygrow,
     )
 
 
@@ -55,8 +55,8 @@ def _(accuracy, mo):
 
 
 @app.cell
-def _(X_test_pl, mo, model, visualize, y_test):
-    html_rf = visualize(model, data=X_test_pl, target=y_test)
+def _(X_test_pl, mo, model, prettygrow, y_test):
+    html_rf = prettygrow(model, data=X_test_pl, target=y_test)
     mo.iframe(html_rf, height="650px")
     return
 
@@ -74,11 +74,11 @@ def _(mo):
 
 
 @app.cell
-def _(GradientBoostingClassifier, X_test_pl, iris, mo, visualize, y_test):
+def _(GradientBoostingClassifier, X_test_pl, iris, mo, prettygrow, y_test):
     gbm = GradientBoostingClassifier(n_estimators=10, max_depth=3, random_state=42)
     gbm.fit(iris.data[:105], iris.target[:105])
 
-    html_gbm = visualize(gbm, data=X_test_pl, target=y_test)
+    html_gbm = prettygrow(gbm, data=X_test_pl, target=y_test)
     mo.iframe(html_gbm, height="700px")
     return
 

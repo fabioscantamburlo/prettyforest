@@ -10,7 +10,7 @@ from sklearn.model_selection import cross_val_score, train_test_split
 import numpy as np
 import polars as pl
 
-from prettyforest import visualize
+from prettyforest import prettygrow
 
 
 def main():
@@ -57,7 +57,7 @@ def main():
 
     # Visualize with true labels
     print("\nGenerating forest visualization...")
-    visualize(
+    prettygrow(
         rf,
         data=X_test_pl,
         target=y_test,

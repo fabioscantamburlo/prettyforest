@@ -7,7 +7,7 @@ import lightgbm as lgb
 from catboost import CatBoostClassifier
 import polars as pl
 
-from prettyforest import visualize
+from prettyforest import prettygrow
 
 
 def main():
@@ -44,7 +44,7 @@ def main():
         model.fit(X_train, y_train)
         acc = model.score(X_test, y_test)
         path = f"tmp/iris_{name.lower()}.html"
-        visualize(
+        prettygrow(
             model,
             data=X_test_pl,
             target=y_test,

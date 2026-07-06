@@ -82,14 +82,14 @@ def main():
             random_state=args.seed,
         )
 
-    from prettyforest import visualize
+    from prettyforest import prettygrow
 
     def run(name, model, X_train, y_train, X_pl):
         model.fit(X_train, y_train)
         # Limit embedded samples to n_predict
         data_subset = X_pl.head(args.n_predict)
         path = outdir / f"{name}.html"
-        visualize(model, data=data_subset, output_path=str(path))
+        prettygrow(model, data=data_subset, output_path=str(path))
         n_trees = (
             getattr(model, "n_estimators", None)
             or getattr(model, "tree_count_", None)

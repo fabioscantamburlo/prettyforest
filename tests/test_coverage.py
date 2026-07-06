@@ -12,7 +12,7 @@ from sklearn.ensemble import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
-from prettyforest import visualize
+from prettyforest import prettygrow
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ class TestTargetConversions:
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
         df = pl.DataFrame({f"f{i}": X[:, i] for i in range(4)})
-        html = visualize(model, data=df, target=np.array(y))
+        html = prettygrow(model, data=df, target=np.array(y))
         assert "targets" in html
 
     def test_target_as_polars_series(self, cls_data):
@@ -43,7 +43,7 @@ class TestTargetConversions:
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
         df = pl.DataFrame({f"f{i}": X[:, i] for i in range(4)})
-        html = visualize(model, data=df, target=pl.Series("y", y))
+        html = prettygrow(model, data=df, target=pl.Series("y", y))
         assert "targets" in html
 
     def test_target_as_list(self, cls_data):
@@ -51,7 +51,7 @@ class TestTargetConversions:
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
         df = pl.DataFrame({f"f{i}": X[:, i] for i in range(4)})
-        html = visualize(model, data=df, target=list(y))
+        html = prettygrow(model, data=df, target=list(y))
         assert "targets" in html
 
 
@@ -63,7 +63,7 @@ class TestBoostingMeta:
         model = GradientBoostingClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
         df = pl.DataFrame({f"f{i}": X[:, i] for i in range(4)})
-        html = visualize(model, data=df)
+        html = prettygrow(model, data=df)
         assert '"boosting"' in html
         assert '"lr"' in html
 
@@ -72,7 +72,7 @@ class TestBoostingMeta:
         model = GradientBoostingRegressor(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
         df = pl.DataFrame({f"f{i}": X[:, i] for i in range(4)})
-        html = visualize(model, data=df)
+        html = prettygrow(model, data=df)
         assert '"init"' in html
 
     def test_model_predictions_embedded(self, cls_data):
@@ -80,7 +80,7 @@ class TestBoostingMeta:
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
         df = pl.DataFrame({f"f{i}": X[:, i] for i in range(4)})
-        html = visualize(model, data=df)
+        html = prettygrow(model, data=df)
         assert '"predictions"' in html
 
 
@@ -91,28 +91,28 @@ class TestSeasonalRendering:
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=5, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model, season="spring")
+        html = prettygrow(model, season="spring")
         assert "visual-tree" in html
 
     def test_summer_season(self, cls_data):
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=5, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model, season="summer")
+        html = prettygrow(model, season="summer")
         assert "visual-tree" in html
 
     def test_autumn_season(self, cls_data):
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=5, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model, season="autumn")
+        html = prettygrow(model, season="autumn")
         assert "visual-tree" in html
 
     def test_winter_season(self, cls_data):
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=5, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model, season="winter")
+        html = prettygrow(model, season="winter")
         assert "visual-tree" in html
 
 
@@ -123,7 +123,7 @@ class TestLargeEnsemble:
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=250, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model)
+        html = prettygrow(model)
         assert "hidden" in html
         assert "page-next" in html
 
@@ -135,7 +135,7 @@ class TestModelTypes:
         X, y = reg_data
         model = DecisionTreeRegressor(max_depth=4, random_state=42)
         model.fit(X, y)
-        html = visualize(model)
+        html = prettygrow(model)
         assert "visual-tree" in html
 
     def test_gbm_classifier_multiclass(self):
@@ -149,7 +149,7 @@ class TestModelTypes:
         )
         model = GradientBoostingClassifier(n_estimators=3, max_depth=2, random_state=42)
         model.fit(X, y)
-        html = visualize(model)
+        html = prettygrow(model)
         # 3 classes × 3 iters = 9 trees
         assert html.count("data-tree-idx=") == 9
 
@@ -161,7 +161,7 @@ class TestModelTypes:
         df = pd.DataFrame(X, columns=["a", "b", "c", "d"])
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(df, y)
-        html = visualize(model)
+        html = prettygrow(model)
         assert "visual-tree" in html
 
 
@@ -196,7 +196,7 @@ class TestCatBoostCoverage:
         X, y = reg_data
         model = CatBoostRegressor(iterations=3, depth=3, verbose=0, random_seed=42)
         model.fit(X, y)
-        html = visualize(model)
+        html = prettygrow(model)
         assert "visual-tree" in html
 
     def test_catboost_tree_count(self, cls_data):
@@ -269,7 +269,7 @@ class TestVisualMapperCoverage:
         X, y = reg_data
         model = GradientBoostingRegressor(n_estimators=5, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model)
+        html = prettygrow(model)
         assert "visual-tree" in html
         # Check variance metric is used
         assert "variance" in html.lower() or "Pred Variance" in html
@@ -278,7 +278,7 @@ class TestVisualMapperCoverage:
         X, y = reg_data
         model = DecisionTreeRegressor(max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model)
+        html = prettygrow(model)
         assert "visual-tree" in html
 
 
@@ -289,7 +289,7 @@ class TestJupyterPath:
         X, y = cls_data
         model = DecisionTreeClassifier(max_depth=3, random_state=42)
         model.fit(X, y)
-        result = visualize(model)
+        result = prettygrow(model)
         assert isinstance(result, str)
         assert "<!DOCTYPE html>" in result
 
@@ -310,7 +310,7 @@ class TestCatBoostMulticlass:
         )
         model = CatBoostClassifier(iterations=3, depth=3, verbose=0, random_seed=42)
         model.fit(X, y)
-        html = visualize(model)
+        html = prettygrow(model)
         assert "visual-tree" in html
 
 
@@ -365,12 +365,12 @@ class TestDataAsNumpy:
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model, data=X, feature_names=["a", "b", "c", "d"])
+        html = prettygrow(model, data=X, feature_names=["a", "b", "c", "d"])
         assert "predict-panel" in html
 
     def test_numpy_without_feature_names(self, cls_data):
         X, y = cls_data
         model = RandomForestClassifier(n_estimators=3, max_depth=3, random_state=42)
         model.fit(X, y)
-        html = visualize(model, data=X)
+        html = prettygrow(model, data=X)
         assert "predict-panel" in html
