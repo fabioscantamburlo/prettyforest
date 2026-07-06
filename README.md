@@ -141,7 +141,8 @@ html = prettygrow(model, data=X_pl, target=iris.target)
 mo.iframe(html, height="700px")
 ```
 
-Use `mo.iframe()` (not `mo.Html()`) — PrettyForest needs JavaScript execution which marimo only allows inside iframes. Full interactivity works: zoom, pan, click, trace, expand.
+Use `mo.iframe()`
+Full interactivity works: zoom, pan, click, trace, expand.
 
 ## Jupyter Integration
 
