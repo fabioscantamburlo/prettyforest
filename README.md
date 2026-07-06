@@ -144,6 +144,7 @@ mo.iframe(html, height="700px")
 Use `mo.iframe()`
 Full interactivity works: zoom, pan, click, trace, expand.
 
+
 ## Jupyter Integration
 
 ```python
