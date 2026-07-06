@@ -7,6 +7,7 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
         args: ['--maxkb=500']
+        exclude: '^assets/'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.6

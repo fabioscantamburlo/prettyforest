@@ -3,7 +3,7 @@
 Interactive 2.5D forest visualization for tree-based ML ensembles. Explore your model's structure, trace predictions through individual trees, and understand how the ensemble makes decisions.
 
 <p align="center">
-  <img src="assets/demo.gif" alt="PrettyForest Demo" width="700"/>
+  <img src="assets/prettyforest.gif" alt="PrettyForest Demo" width="700"/>
 </p>
 
 ## Features

@@ -57,7 +57,7 @@ def _(accuracy, mo):
 @app.cell
 def _(X_test_pl, mo, model, visualize, y_test):
     html_rf = visualize(model, data=X_test_pl, target=y_test)
-    mo.iframe(html_rf, height="700px")
+    mo.iframe(html_rf, height="650px")
     return
 
 
