@@ -153,7 +153,9 @@ from prettyforest import prettygrow
 prettygrow(model, data=X_test)  # auto-displays via IPython.display.HTML
 ```
 
-> **Known issues:** In Google Colab, double-click to expand a tree doesn't work. In Marimo cloud (molab), the visualization fails to render. Both are under investigation. Locally (JupyterLab, Marimo desktop) everything works as expected.
+## **Known issues:**
+
+In Google Colab, double-click to expand a tree doesn't work. In Marimo cloud (molab), the visualization fails to render. Both are under investigation. Locally (JupyterLab, Marimo desktop) everything works as expected.
 
 ## Understanding Boosted vs Bagged Trees
 
