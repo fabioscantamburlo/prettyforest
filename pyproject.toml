@@ -17,6 +17,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Visualization",
 ]
 dependencies = [
+    "anywidget>=0.11.0",
     "numpy>=1.24.0",
     "polars>=1.0.0",
     "scikit-learn>=1.3.0",

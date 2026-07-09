@@ -129,7 +129,7 @@ def _extract_boosting_meta(model: Any) -> dict | None:
     return meta if meta else None
 
 
-def _handle_output(html: str, output_path: str | Path | None) -> str | None:
+def _handle_output(html: str, output_path: str | Path | None):
     if output_path is not None:
         path = Path(output_path)
         try:
@@ -139,18 +139,27 @@ def _handle_output(html: str, output_path: str | Path | None) -> str | None:
             raise OSError(msg) from e
         return None
 
+    # Check if in an interactive notebook context
     try:
         from IPython import get_ipython
 
         shell = get_ipython()
         if shell is not None and "IPKernelApp" in shell.config:
-            from IPython.display import HTML, display
+            # In a Jupyter/Marimo kernel — use anywidget
+            try:
+                from prettyforest.widget import PrettyForestWidget
 
-            display(HTML(html))
-            return None
+                return PrettyForestWidget(html_content=html)
+            except ImportError:
+                # anywidget not installed, fall back to display
+                from IPython.display import HTML, display
+
+                display(HTML(html))
+                return None
     except (ImportError, AttributeError):
         pass
 
+    # Not in a notebook — return raw HTML string
     return html
 
 

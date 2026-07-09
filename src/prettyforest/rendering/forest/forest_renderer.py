@@ -326,7 +326,7 @@ class ForestRenderer:
                     '<input type="number" id="predict-row" min="0" value="0" style="width:60px"/>\n',
                     '<button id="predict-go" class="tool-btn">Trace</button>\n',
                     '<button id="predict-clear" class="tool-btn">Clear</button>\n',
-                    '<div id="predict-result"></div>\n',
+                    '<span id="predict-result"></span>\n',
                     "</div>\n",
                     "</div>\n",
                 ]
@@ -562,7 +562,7 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 .predict-header strong { font-size: 13px; color: #1c281e; }
 #predict-close { border: none; background: none; font-size: 16px; cursor: pointer; color: #888; transition: color 0.2s; }
 #predict-close:hover { color: #1c281e; }
-.predict-body { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.predict-body { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
 .predict-body label { font-size: 12px; color: #556256; font-weight: 500; }
 .predict-body input {
     padding: 4px 8px;
@@ -575,7 +575,7 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
     transition: border-color 0.2s;
 }
 .predict-body input:focus { border-color: #4caf50; }
-#predict-result { font-size: 13px; color: #1c281e; margin-left: 12px; }
+#predict-result { font-size: 13px; color: #1c281e; margin-left: 12px; white-space: nowrap; }
 #predict-result strong { color: #1565c0; font-weight: 700; }
 .predict-badge { font-size: 9px; font-weight: bold; fill: white; }
 .predict-badge-bg { rx: 3; }
@@ -608,14 +608,14 @@ body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', san
 
 .detail-body {
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
     padding: 24px;
     display: flex;
-    justify-content: center;
+    align-items: flex-start;
     cursor: grab;
     background: radial-gradient(ellipse at center, rgba(249, 253, 249, 0.5) 0%, rgba(238, 245, 238, 0.5) 100%);
 }
-.detail-body svg { height: auto; cursor: grab; }
+.detail-body svg { height: auto; cursor: grab; flex-shrink: 0; }
 .detail-body svg:active { cursor: grabbing; }
 .detail-body .node-rect { fill: #fffde7; stroke: #5D4037; stroke-width: 2; rx: 8; }
 .detail-body .node-rect.leaf { fill: #e8f5e9; stroke: #2e7d32; stroke-width: 2; }
@@ -826,22 +826,23 @@ body.dark .model-desc .key { color: #ecf3ed; }
 """
 
 _JS = r"""
-(function() {
-  var svg = document.getElementById('forest-svg');
-  var container = document.getElementById('forest-container');
-  var tooltip = document.getElementById('tooltip');
-  var sortBy = document.getElementById('sort-by');
-  var pagePrev = document.getElementById('page-prev');
-  var pageNext = document.getElementById('page-next');
-  var pageInfo = document.getElementById('page-info');
-  var resetAll = document.getElementById('reset-all');
-  var spotlightPanel = document.getElementById('spotlight-panel');
-  var spotlightClose = document.getElementById('spotlight-close');
-  var spotlightContent = document.getElementById('spotlight-content');
-  var zoomIn = document.getElementById('zoom-in');
-  var zoomOut = document.getElementById('zoom-out');
-  var zoomReset = document.getElementById('zoom-reset');
-  var zoomLabel = document.getElementById('zoom-level');
+(function(ROOT) {
+  var $ = function(id) { return ROOT.querySelector('#' + id); };
+  var svg = $('forest-svg');
+  var container = $('forest-container');
+  var tooltip = $('tooltip');
+  var sortBy = $('sort-by');
+  var pagePrev = $('page-prev');
+  var pageNext = $('page-next');
+  var pageInfo = $('page-info');
+  var resetAll = $('reset-all');
+  var spotlightPanel = $('spotlight-panel');
+  var spotlightClose = $('spotlight-close');
+  var spotlightContent = $('spotlight-content');
+  var zoomIn = $('zoom-in');
+  var zoomOut = $('zoom-out');
+  var zoomReset = $('zoom-reset');
+  var zoomLabel = $('zoom-level');
   if (!svg || !container) return;
 
   // --- Collect all tree elements and their data ---
@@ -931,16 +932,17 @@ _JS = r"""
   zoomReset.addEventListener('click', function() { scale = 1; tx = 0; ty = 0; applyZoom(); });
 
   // Dark mode toggle
-  var darkBtn = document.getElementById('dark-toggle');
+  var darkBtn = $('dark-toggle');
+  var themeRoot = ROOT === document ? document.body : ROOT;
   if (darkBtn) {
     darkBtn.addEventListener('click', function() {
-      document.body.classList.toggle('dark');
-      darkBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+      themeRoot.classList.toggle('dark');
+      darkBtn.textContent = themeRoot.classList.contains('dark') ? '☀️' : '🌙';
     });
   }
 
   // Season toggle — recolors canopies and ground live
-  var seasonSelect = document.getElementById('season-toggle');
+  var seasonSelect = $('season-toggle');
   if (seasonSelect) {
     var seasonPalettes = {
       spring: { canopy: ['#90EE90','#98FB98','#FFB7C5','#FF69B4','#DDA0DD','#87CEAB'], ground: '#a8d8a0', sky: '#f1fff1' },
@@ -1115,11 +1117,11 @@ _JS = r"""
 
   // --- Info button + Model description ---
   (function() {
-    var infoBtn = document.getElementById('info-btn');
-    var svgInfoBtn = document.getElementById('svg-info-btn');
-    var infoPanel = document.getElementById('model-info-panel');
-    var infoClose = document.getElementById('info-panel-close');
-    var descEl = document.getElementById('model-description');
+    var infoBtn = $('info-btn');
+    var svgInfoBtn = $('svg-info-btn');
+    var infoPanel = $('model-info-panel');
+    var infoClose = $('info-panel-close');
+    var descEl = $('model-description');
     if (!infoPanel) return;
 
     var descriptions = {
@@ -1151,11 +1153,11 @@ _JS = r"""
 
   // --- Double-click to open tree detail modal ---
   (function() {
-    var modal = document.getElementById('detail-modal');
-    var modalBody = document.getElementById('detail-body');
-    var modalTitle = document.getElementById('detail-title');
-    var closeBtn = document.getElementById('detail-close');
-    var treesEl = document.getElementById('trees-data');
+    var modal = $('detail-modal');
+    var modalBody = $('detail-body');
+    var modalTitle = $('detail-title');
+    var closeBtn = $('detail-close');
+    var treesEl = $('trees-data');
     if (!modal || !treesEl) return;
 
     var allTreeStructures = JSON.parse(treesEl.textContent);
@@ -1171,7 +1173,7 @@ _JS = r"""
       detailScale = 1; detailTx = 0; detailTy = 0;
 
       // Show boosted model note
-      var noteEl = document.getElementById('detail-note');
+      var noteEl = $('detail-note');
       if (noteEl) {
         if (IS_BOOSTED) {
           noteEl.textContent = '\u26a0\ufe0f This is a boosted tree — leaf values are gradient corrections (residuals), not final predictions. The sample path and splits are on original features.';
@@ -1184,8 +1186,8 @@ _JS = r"""
       // Get traced sample if available
       var tracedSample = null;
       if (traceActive) {
-        var predDataEl = document.getElementById('predict-data');
-        var rowInput = document.getElementById('predict-row');
+        var predDataEl = $('predict-data');
+        var rowInput = $('predict-row');
         if (predDataEl && rowInput) {
           try {
             var pd = JSON.parse(predDataEl.textContent);
@@ -1198,7 +1200,7 @@ _JS = r"""
       }
 
       // Show sample data in detail header
-      var detailSampleEl = document.getElementById('detail-sample');
+      var detailSampleEl = $('detail-sample');
       if (detailSampleEl) {
         if (tracedSample) {
           var html = '<div class="sample-chips">';
@@ -1217,9 +1219,19 @@ _JS = r"""
       }
 
       detailSvg = renderTreeSVG(treeStruct, tracedSample);
-      detailSvg.style.transition = 'transform 0.15s ease';
+      detailSvg.style.transition = 'none';
+      detailSvg.style.transformOrigin = '0 0';
       modalBody.appendChild(detailSvg);
       modal.classList.add('open');
+      // Center the SVG within the modal body
+      requestAnimationFrame(function() {
+        var bodyW = modalBody.clientWidth;
+        var svgW = detailSvg.getBoundingClientRect().width / detailScale;
+        detailTx = Math.max(0, (bodyW - svgW) / 2);
+        detailTy = 0;
+        detailSvg.style.transform = 'translate(' + detailTx + 'px,' + detailTy + 'px) scale(' + detailScale + ')';
+        requestAnimationFrame(function() { detailSvg.style.transition = 'transform 0.15s ease'; });
+      });
     }
 
     svg.addEventListener('dblclick', function(e) {
@@ -1231,7 +1243,7 @@ _JS = r"""
     });
 
     // Also open from spotlight panel on double-click the panel title
-    var spotlightEl = document.getElementById('spotlight-content');
+    var spotlightEl = $('spotlight-content');
     if (spotlightEl) {
       spotlightEl.addEventListener('dblclick', function() {
         if (!spotlitEl) return;
@@ -1275,11 +1287,11 @@ _JS = r"""
     function applyDetailTransform() {
       if (!detailSvg) return;
       detailSvg.style.transform = 'translate(' + detailTx + 'px,' + detailTy + 'px) scale(' + detailScale + ')';
-      detailSvg.style.transformOrigin = 'center top';
+      detailSvg.style.transformOrigin = '0 0';
     }
 
     // --- Lightweight tree layout + SVG renderer (per-node expand) ---
-    var NODE_W = 140, NODE_H = 50, H_GAP = 16, V_GAP = 60;
+    var NODE_W = 160, NODE_H = 50, H_GAP = 16, V_GAP = 60;
     var INITIAL_DEPTH = 3;
     var currentTreeStruct = null, currentSample = null;
     var expandedNodes = {};
@@ -1329,10 +1341,10 @@ _JS = r"""
     }
 
     function renderTreeSVG(ts, sample) { currentTreeStruct=ts; currentSample=sample; expandedNodes={}; return buildSvg(); }
-    function rerender() { if(!currentTreeStruct) return; modalBody.innerHTML=''; detailScale=1;detailTx=0;detailTy=0; detailSvg=buildSvg(); detailSvg.style.transition='transform 0.15s ease'; modalBody.appendChild(detailSvg); }
+    function rerender() { if(!currentTreeStruct) return; modalBody.innerHTML=''; detailSvg=buildSvg(); detailSvg.style.transition='none'; detailSvg.style.transformOrigin='0 0'; detailSvg.style.transform='translate('+detailTx+'px,'+detailTy+'px) scale('+detailScale+')'; modalBody.appendChild(detailSvg); requestAnimationFrame(function(){if(detailSvg)detailSvg.style.transition='transform 0.15s ease';}); }
 
     function buildSvg() {
-      var sample=currentSample, ts=currentTreeStruct, NH=sample?60:NODE_H;
+      var sample=currentSample, ts=currentTreeStruct, NH=sample?70:NODE_H;
       var layout=computeLayout(ts,0,INITIAL_DEPTH,'R'), positions=[];
       assignPos(layout, layout.width/2, 20, positions, NH);
       var pathSet=getPS(positions,ts,sample), hasP=pathSet.size>0;
@@ -1349,9 +1361,14 @@ _JS = r"""
           var c=positions[cI],onE=pOn&&pathSet.has(cI),dim=hasP&&!onE;
           var ln=document.createElementNS(ns,'line');
           ln.setAttribute('x1',p.x);ln.setAttribute('y1',p.y+NH);ln.setAttribute('x2',c.x);ln.setAttribute('y2',c.y);
-          ln.setAttribute('class','edge-line'+(onE?' on-path':'')+(dim?' dimmed':''));el.appendChild(ln);
+          ln.setAttribute('class','edge-line'+(onE?' on-path':'')+(dim?' dimmed':''));
+          ln.style.stroke=onE?'#1565c0':'#8d6e63';ln.style.strokeWidth=onE?'3.5':'2.5';ln.style.strokeLinecap='round';
+          if(dim)ln.style.opacity='0.15';
+          el.appendChild(ln);
           var lb=document.createElementNS(ns,'text');lb.setAttribute('x',(p.x+c.x)/2+(ci===0?-10:10));
           lb.setAttribute('y',(p.y+NH+c.y)/2);lb.setAttribute('class','edge-label'+(dim?' dimmed':''));
+          lb.style.fill=onE?'#1565c0':'#5D4037';lb.style.fontSize='11px';lb.style.textAnchor='middle';lb.style.fontWeight='600';
+          if(dim)lb.style.opacity='0.15';
           lb.textContent=ci===0?'\u2713':'\u2717';el.appendChild(lb);
         });
       }
@@ -1362,9 +1379,19 @@ _JS = r"""
         var rect=document.createElementNS(ns,'rect');
         rect.setAttribute('x',rx);rect.setAttribute('y',ry);rect.setAttribute('width',NODE_W);rect.setAttribute('height',NH);
         rect.setAttribute('class',(nd.t==='l'?'node-rect leaf':'node-rect')+(onP?' on-path':'')+(dim?' dimmed':''));
+        // Inline fill/stroke to survive notebook CSS overrides
+        if(onP){rect.style.fill=nd.t==='l'?'#bbdefb':'#e3f2fd';rect.style.stroke='#1565c0';rect.style.strokeWidth='3';}
+        else if(nd.t==='l'){rect.style.fill='#e8f5e9';rect.style.stroke='#2e7d32';rect.style.strokeWidth='2';}
+        else{rect.style.fill='#fffde7';rect.style.stroke='#5D4037';rect.style.strokeWidth='2';}
+        rect.setAttribute('rx','8');
+        if(dim){rect.style.opacity='0.2';}
         el.appendChild(rect);
-        var t1=document.createElementNS(ns,'text');t1.setAttribute('x',pos.x);t1.setAttribute('y',ry+18);t1.setAttribute('class','node-text'+(dim?' dimmed':''));
-        var t2=document.createElementNS(ns,'text');t2.setAttribute('x',pos.x);t2.setAttribute('y',ry+33);t2.setAttribute('class','node-text'+(dim?' dimmed':''));
+        var t1=document.createElementNS(ns,'text');t1.setAttribute('x',pos.x);t1.setAttribute('y',ry+(sample?20:18));t1.setAttribute('class','node-text'+(dim?' dimmed':''));
+        t1.style.fill='#333';t1.style.fontSize='11px';t1.style.textAnchor='middle';t1.style.pointerEvents='none';
+        if(dim)t1.style.opacity='0.2';
+        var t2=document.createElementNS(ns,'text');t2.setAttribute('x',pos.x);t2.setAttribute('y',ry+(sample?36:33));t2.setAttribute('class','node-text'+(dim?' dimmed':''));
+        t2.style.fill='#333';t2.style.fontSize='11px';t2.style.textAnchor='middle';t2.style.pointerEvents='none';
+        if(dim)t2.style.opacity='0.2';
 
         if(trunc>0){
           t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);
@@ -1374,7 +1401,7 @@ _JS = r"""
           rect.addEventListener('click',xp);t2.addEventListener('click',xp);
         }else if(nd.t==='s'){
           t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);t2.textContent='';
-          if(sample&&onP&&sample[nd.f]!==undefined){var vt=document.createElementNS(ns,'text');vt.setAttribute('x',pos.x);vt.setAttribute('y',ry+48);vt.setAttribute('class','node-text sample-val');vt.textContent=nd.f+' = '+sample[nd.f].toFixed(3);el.appendChild(vt);}
+          if(sample&&onP&&sample[nd.f]!==undefined){var vt=document.createElementNS(ns,'text');vt.setAttribute('x',pos.x);vt.setAttribute('y',ry+55);vt.setAttribute('class','node-text sample-val');vt.style.fill='#1565c0';vt.style.fontSize='10px';vt.style.fontStyle='italic';vt.style.fontWeight='500';vt.style.textAnchor='middle';vt.style.pointerEvents='none';vt.textContent=nd.f+' = '+sample[nd.f].toFixed(3);el.appendChild(vt);}
         }else{
           if(nd.c){var best='',bv=-1;for(var k in nd.c){if(nd.c[k]>bv){bv=nd.c[k];best=k;}}
             if(IS_BOOSTED){t1.textContent='🌿 Leaf correction';var vals=[];for(var k2 in nd.c){vals.push(k2+':'+nd.c[k2].toFixed(3));}t2.textContent=vals.join(' ');}
@@ -1391,15 +1418,15 @@ _JS = r"""
   // --- Prediction panel ---
   (function() {
     if (!HAS_PREDICT) return;
-    var dataEl = document.getElementById('predict-data');
+    var dataEl = $('predict-data');
     if (!dataEl) return;
     var predData = JSON.parse(dataEl.textContent);
-    var goBtn = document.getElementById('predict-go');
-    var clearBtn = document.getElementById('predict-clear');
-    var rowInput = document.getElementById('predict-row');
-    var resultEl = document.getElementById('predict-result');
-    var closeBtn = document.getElementById('predict-close');
-    var panel = document.getElementById('predict-panel');
+    var goBtn = $('predict-go');
+    var clearBtn = $('predict-clear');
+    var rowInput = $('predict-row');
+    var resultEl = $('predict-result');
+    var closeBtn = $('predict-close');
+    var panel = $('predict-panel');
 
     if (closeBtn && panel) {
       closeBtn.addEventListener('click', function() { panel.style.display = 'none'; });
@@ -1432,13 +1459,13 @@ _JS = r"""
     function clearBadges() {
       svg.querySelectorAll('.pred-label').forEach(function(el) { el.remove(); });
       resultEl.textContent = '';
-      var sd = document.getElementById('sample-display');
+      var sd = $('sample-display');
       if (sd) sd.classList.remove('visible');
       traceActive = false;
     }
 
     function showSampleDisplay(sample, idx) {
-      var sd = document.getElementById('sample-display');
+      var sd = $('sample-display');
       if (!sd) return;
       var html = '<span class="sample-title">Sample #' + idx + '</span>';
       html += '<div class="sample-chips">';
@@ -1590,5 +1617,5 @@ _JS = r"""
       setTimeout(function() { tree.classList.add('grown'); }, d + 650);
     });
   })();
-})();
+})(document);
 """
