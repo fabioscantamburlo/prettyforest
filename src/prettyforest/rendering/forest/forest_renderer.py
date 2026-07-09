@@ -1345,6 +1345,18 @@ _JS = r"""
 
     function buildSvg() {
       var sample=currentSample, ts=currentTreeStruct, NH=sample?70:NODE_H;
+      var isDark = themeRoot.classList.contains('dark');
+      var txtColor = isDark ? '#ecf3ed' : '#333';
+      var splitFill = isDark ? '#2c2c1a' : '#fffde7';
+      var splitStroke = isDark ? '#a1887f' : '#5D4037';
+      var leafFill = isDark ? '#1a2e1a' : '#e8f5e9';
+      var leafStroke = isDark ? '#66bb6a' : '#2e7d32';
+      var pathFill = isDark ? '#1a2a3a' : '#e3f2fd';
+      var pathLeafFill = isDark ? '#1a3a5a' : '#bbdefb';
+      var pathStroke = isDark ? '#64b5f6' : '#1565c0';
+      var edgeColor = isDark ? '#a1887f' : '#8d6e63';
+      var edgeLabelColor = isDark ? '#bcaaa4' : '#5D4037';
+      var sampleValColor = isDark ? '#64b5f6' : '#1565c0';
       var layout=computeLayout(ts,0,INITIAL_DEPTH,'R'), positions=[];
       assignPos(layout, layout.width/2, 20, positions, NH);
       var pathSet=getPS(positions,ts,sample), hasP=pathSet.size>0;
@@ -1362,13 +1374,13 @@ _JS = r"""
           var ln=document.createElementNS(ns,'line');
           ln.setAttribute('x1',p.x);ln.setAttribute('y1',p.y+NH);ln.setAttribute('x2',c.x);ln.setAttribute('y2',c.y);
           ln.setAttribute('class','edge-line'+(onE?' on-path':'')+(dim?' dimmed':''));
-          ln.style.stroke=onE?'#1565c0':'#8d6e63';ln.style.strokeWidth=onE?'3.5':'2.5';ln.style.strokeLinecap='round';
-          if(dim)ln.style.opacity='0.15';
+          ln.style.stroke=onE?pathStroke:edgeColor;ln.style.strokeWidth=onE?'3.5':'2.5';ln.style.strokeLinecap='round';
+          if(dim)ln.style.opacity=isDark?'0.3':'0.15';
           el.appendChild(ln);
           var lb=document.createElementNS(ns,'text');lb.setAttribute('x',(p.x+c.x)/2+(ci===0?-10:10));
           lb.setAttribute('y',(p.y+NH+c.y)/2);lb.setAttribute('class','edge-label'+(dim?' dimmed':''));
-          lb.style.fill=onE?'#1565c0':'#5D4037';lb.style.fontSize='11px';lb.style.textAnchor='middle';lb.style.fontWeight='600';
-          if(dim)lb.style.opacity='0.15';
+          lb.style.fill=onE?pathStroke:edgeLabelColor;lb.style.fontSize='11px';lb.style.textAnchor='middle';lb.style.fontWeight='600';
+          if(dim)lb.style.opacity=isDark?'0.3':'0.15';
           lb.textContent=ci===0?'\u2713':'\u2717';el.appendChild(lb);
         });
       }
@@ -1380,28 +1392,28 @@ _JS = r"""
         rect.setAttribute('x',rx);rect.setAttribute('y',ry);rect.setAttribute('width',NODE_W);rect.setAttribute('height',NH);
         rect.setAttribute('class',(nd.t==='l'?'node-rect leaf':'node-rect')+(onP?' on-path':'')+(dim?' dimmed':''));
         // Inline fill/stroke to survive notebook CSS overrides
-        if(onP){rect.style.fill=nd.t==='l'?'#bbdefb':'#e3f2fd';rect.style.stroke='#1565c0';rect.style.strokeWidth='3';}
-        else if(nd.t==='l'){rect.style.fill='#e8f5e9';rect.style.stroke='#2e7d32';rect.style.strokeWidth='2';}
-        else{rect.style.fill='#fffde7';rect.style.stroke='#5D4037';rect.style.strokeWidth='2';}
+        if(onP){rect.style.fill=nd.t==='l'?pathLeafFill:pathFill;rect.style.stroke=pathStroke;rect.style.strokeWidth='3';}
+        else if(nd.t==='l'){rect.style.fill=leafFill;rect.style.stroke=leafStroke;rect.style.strokeWidth='2';}
+        else{rect.style.fill=splitFill;rect.style.stroke=splitStroke;rect.style.strokeWidth='2';}
         rect.setAttribute('rx','8');
-        if(dim){rect.style.opacity='0.2';}
+        if(dim){rect.style.opacity=isDark?'0.35':'0.2';}
         el.appendChild(rect);
         var t1=document.createElementNS(ns,'text');t1.setAttribute('x',pos.x);t1.setAttribute('y',ry+(sample?20:18));t1.setAttribute('class','node-text'+(dim?' dimmed':''));
-        t1.style.fill='#333';t1.style.fontSize='11px';t1.style.textAnchor='middle';t1.style.pointerEvents='none';
-        if(dim)t1.style.opacity='0.2';
+        t1.style.fill=txtColor;t1.style.fontSize='11px';t1.style.textAnchor='middle';t1.style.pointerEvents='none';
+        if(dim)t1.style.opacity=isDark?'0.4':'0.2';
         var t2=document.createElementNS(ns,'text');t2.setAttribute('x',pos.x);t2.setAttribute('y',ry+(sample?36:33));t2.setAttribute('class','node-text'+(dim?' dimmed':''));
-        t2.style.fill='#333';t2.style.fontSize='11px';t2.style.textAnchor='middle';t2.style.pointerEvents='none';
-        if(dim)t2.style.opacity='0.2';
+        t2.style.fill=txtColor;t2.style.fontSize='11px';t2.style.textAnchor='middle';t2.style.pointerEvents='none';
+        if(dim)t2.style.opacity=isDark?'0.4':'0.2';
 
         if(trunc>0){
           t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);
-          t2.textContent='\u25bc expand (+'+trunc+')';t2.style.fill='#1565c0';t2.style.fontSize='9px';t2.style.cursor='pointer';
+          t2.textContent='\u25bc expand (+'+trunc+')';t2.style.fill=sampleValColor;t2.style.fontSize='9px';t2.style.cursor='pointer';
           rect.style.cursor='pointer';rect.style.strokeDasharray='4,2';
           var xp=function(e){e.stopPropagation();expandedNodes[nPath]=(expandedNodes[nPath]||0)+3;rerender();};
           rect.addEventListener('click',xp);t2.addEventListener('click',xp);
         }else if(nd.t==='s'){
           t1.textContent=nd.f+' '+nd.op+' '+nd.th.toFixed(4);t2.textContent='';
-          if(sample&&onP&&sample[nd.f]!==undefined){var vt=document.createElementNS(ns,'text');vt.setAttribute('x',pos.x);vt.setAttribute('y',ry+55);vt.setAttribute('class','node-text sample-val');vt.style.fill='#1565c0';vt.style.fontSize='10px';vt.style.fontStyle='italic';vt.style.fontWeight='500';vt.style.textAnchor='middle';vt.style.pointerEvents='none';vt.textContent=nd.f+' = '+sample[nd.f].toFixed(3);el.appendChild(vt);}
+          if(sample&&onP&&sample[nd.f]!==undefined){var vt=document.createElementNS(ns,'text');vt.setAttribute('x',pos.x);vt.setAttribute('y',ry+55);vt.setAttribute('class','node-text sample-val');vt.style.fill=sampleValColor;vt.style.fontSize='10px';vt.style.fontStyle='italic';vt.style.fontWeight='500';vt.style.textAnchor='middle';vt.style.pointerEvents='none';vt.textContent=nd.f+' = '+sample[nd.f].toFixed(3);el.appendChild(vt);}
         }else{
           if(nd.c){var best='',bv=-1;for(var k in nd.c){if(nd.c[k]>bv){bv=nd.c[k];best=k;}}
             if(IS_BOOSTED){t1.textContent='🌿 Leaf correction';var vals=[];for(var k2 in nd.c){vals.push(k2+':'+nd.c[k2].toFixed(3));}t2.textContent=vals.join(' ');}
