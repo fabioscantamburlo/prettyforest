@@ -54,5 +54,6 @@ packages = ["src/prettyforest"]
 [tool.hatch.build.targets.sdist]
 exclude = ["assets/", "tmp/", "examples/", "tests/", "catboost_info/"]
 
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
