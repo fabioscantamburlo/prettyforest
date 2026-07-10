@@ -327,10 +327,6 @@ class SceneComposer:
             '<text x="10" y="74" font-size="9" fill="#555">🟡 Amber canopy = impure / high variance</text>'
             '<text x="10" y="88" font-size="9" fill="#888">Hover any tree for detailed stats</text>'
             "</g>"
-            f'<g class="info-btn" id="svg-info-btn" transform="translate({lx + 240},{ly})" style="cursor:pointer">'
-            '<circle cx="14" cy="14" r="14" fill="rgba(255,255,255,0.9)" stroke="#aaa" stroke-width="1"/>'
-            '<text x="14" y="19" font-size="14" text-anchor="middle" fill="#555" font-weight="bold">?</text>'
-            "</g>"
         )
 
 

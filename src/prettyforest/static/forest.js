@@ -35,7 +35,24 @@ function initForest(ROOT, configOptions) {
   var zoomLabel = $('zoom-level');
   if (!svg || !container) return;
 
+  var uid = '_' + Math.random().toString(36).substr(2, 9);
+  var defs = svg.querySelector('defs');
+  if (defs) {
+    defs.querySelectorAll('[id]').forEach(function(el) {
+      var oldId = el.getAttribute('id');
+      var newId = oldId + uid;
+      el.setAttribute('id', newId);
+      svg.querySelectorAll('[fill="url(#' + oldId + ')"]').forEach(function(node) {
+        node.setAttribute('fill', 'url(#' + newId + ')');
+      });
+      svg.querySelectorAll('[stroke="url(#' + oldId + ')"]').forEach(function(node) {
+        node.setAttribute('stroke', 'url(#' + newId + ')');
+      });
+    });
+  }
+
   // --- Collect all tree elements and their data ---
+
   var traceActive = false;
   var allTrees = Array.prototype.slice.call(svg.querySelectorAll('.visual-tree'));
   var treeData = allTrees.map(function(el) {
@@ -135,8 +152,9 @@ function initForest(ROOT, configOptions) {
       winter: { canopy: [], ground: '#B0C4DE', sky: '#e3f2fd', bare: true }
     };
 
-    var groundStops = svg.querySelectorAll('#ground-gradient stop');
-    var skyStops = svg.querySelectorAll('#sky-gradient stop');
+    var groundStops = svg.querySelectorAll('[id^="ground-gradient"] stop');
+    var skyStops = svg.querySelectorAll('[id^="sky-gradient"] stop');
+
     var patches = svg.querySelectorAll('ellipse[data-patch]');
     var origGround = []; groundStops.forEach(function(s) { origGround.push(s.getAttribute('stop-color')); });
     var origSky = []; skyStops.forEach(function(s) { origSky.push(s.getAttribute('stop-color')); });
@@ -188,17 +206,7 @@ function initForest(ROOT, configOptions) {
     if (!dragging) return; tx = e.clientX - sx; ty = e.clientY - sy; svg.style.transition = 'none'; applyZoom();
   });
   document.addEventListener('mouseup', function() { dragging = false; svg.style.cursor = 'grab'; svg.style.transition = 'transform 0.15s ease'; });
-  document.addEventListener('keydown', function(e) {
-    switch(e.key) {
-      case 'ArrowLeft': tx += 40; break; case 'ArrowRight': tx -= 40; break;
-      case 'ArrowUp': ty += 40; break; case 'ArrowDown': ty -= 40; break;
-      case '+': case '=': scale = Math.min(scale * 1.15, 5); break;
-      case '-': scale = Math.max(scale / 1.15, 0.2); break;
-      case 'Escape': closeSpotlight(); return;
-      default: return;
-    }
-    e.preventDefault(); applyZoom();
-  });
+
 
   // --- Tooltip ---
   function findTree(el) {
@@ -219,14 +227,25 @@ function initForest(ROOT, configOptions) {
       if (d.purity !== null) h += 'Purity: ' + (d.purity*100).toFixed(1) + '%<br>';
       if (d.magnitude !== null) h += 'Magnitude: ' + d.magnitude.toFixed(4) + '<br>';
       if (d.variance !== null) h += 'Variance: ' + d.variance.toFixed(2) + '<br>';
+      var ranked = treeData.slice().filter(function(t) { return metric(t) !== null; });
+      ranked.sort(function(a, b) { return (metric(b)||0) - (metric(a)||0); });
+      var rank = ranked.findIndex(function(t) { return t.el === tree; }) + 1;
+      if (rank > 0) h += METRIC_LABEL + ' rank: #' + rank + '/' + ranked.length + '<br>';
       tooltip.innerHTML = h; tooltip.style.display = 'block';
     });
     svg.addEventListener('mousemove', function(e) {
-      if (tooltip.style.display === 'block') { tooltip.style.left=(e.clientX+14)+'px'; tooltip.style.top=(e.clientY+14)+'px'; }
+      if (tooltip.style.display === 'block') {
+        var tx = e.clientX + 14, ty = e.clientY + 14;
+        if (tx + 220 > window.innerWidth) tx = Math.max(10, e.clientX - 230);
+        if (ty + 170 > window.innerHeight) ty = Math.max(10, e.clientY - 180);
+        tooltip.style.left = tx + 'px';
+        tooltip.style.top = ty + 'px';
+      }
     });
     svg.addEventListener('mouseout', function(e) { if (!findTree(e.target)) tooltip.style.display='none'; });
     svg.addEventListener('mouseleave', function() { tooltip.style.display='none'; });
   }
+
 
   // --- Sort ---
   if (sortBy) {
@@ -252,7 +271,6 @@ function initForest(ROOT, configOptions) {
   // --- Reset ---
   if (resetAll) {
     resetAll.addEventListener('click', function() {
-      closeSpotlight();
       if (sortBy) sortBy.value = 'natural';
       sortedData = treeData.slice();
       currentPage = 0;
@@ -265,49 +283,6 @@ function initForest(ROOT, configOptions) {
     });
   }
 
-  // --- Click to spotlight ---
-  var spotlitEl = null;
-  var lastSpotlightClick = 0, lastSpotlightTree = null;
-  svg.addEventListener('click', function(e) {
-    var tree = findTree(e.target);
-    if (!tree) { closeSpotlight(); return; }
-    var now = Date.now();
-    if (spotlitEl === tree) {
-      if (lastSpotlightTree === tree && (now - lastSpotlightClick) < 380) {
-        return;
-      }
-      closeSpotlight();
-      return;
-    }
-    lastSpotlightClick = now;
-    lastSpotlightTree = tree;
-
-    if (spotlitEl) spotlitEl.classList.remove('spotlit');
-    spotlitEl = tree;
-    tree.classList.add('spotlit');
-
-    var d = treeData.find(function(t) { return t.el === tree; });
-    if (!d || !spotlightContent || !spotlightPanel) return;
-    var h = '<strong>Tree #' + d.idx + '</strong>';
-    h += '<div class="stat-row"><span class="stat-label">Depth</span><span class="stat-value">' + d.depth + '</span></div>';
-    h += '<div class="stat-row"><span class="stat-label">Nodes</span><span class="stat-value">' + d.nodes + '</span></div>';
-    h += '<div class="stat-row"><span class="stat-label">Leaves</span><span class="stat-value">' + d.leaves + '</span></div>';
-    if (d.purity !== null) h += '<div class="stat-row"><span class="stat-label">Purity</span><span class="stat-value">' + (d.purity*100).toFixed(1) + '%</span></div>';
-    if (d.magnitude !== null) h += '<div class="stat-row"><span class="stat-label">Magnitude</span><span class="stat-value">' + d.magnitude.toFixed(4) + '</span></div>';
-    if (d.variance !== null) h += '<div class="stat-row"><span class="stat-label">Variance</span><span class="stat-value">' + d.variance.toFixed(2) + '</span></div>';
-    var ranked = treeData.slice().filter(function(t) { return metric(t) !== null; });
-    ranked.sort(function(a, b) { return (metric(b)||0) - (metric(a)||0); });
-    var rank = ranked.findIndex(function(t) { return t.el === tree; }) + 1;
-    if (rank > 0) h += '<div class="stat-row" style="margin-top:4px"><span class="stat-label">' + METRIC_LABEL + ' rank</span><span class="stat-value">#' + rank + '/' + ranked.length + '</span></div>';
-    spotlightContent.innerHTML = h;
-    spotlightPanel.classList.add('visible');
-  });
-  if (spotlightClose) spotlightClose.addEventListener('click', closeSpotlight);
-  function closeSpotlight() {
-    if (spotlitEl) spotlitEl.classList.remove('spotlit');
-    spotlitEl = null;
-    if (spotlightPanel) spotlightPanel.classList.remove('visible');
-  }
 
   // --- Info button + Model description ---
   (function() {

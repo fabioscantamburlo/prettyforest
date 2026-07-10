@@ -31,7 +31,7 @@ def _(RandomForestClassifier, load_iris, pl, train_test_split):
         iris.data, iris.target, test_size=0.3, random_state=42
     )
 
-    model = RandomForestClassifier(n_estimators=20, max_depth=5, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
     model.fit(X_train, y_train)
     accuracy = model.score(X_test, y_test)
 

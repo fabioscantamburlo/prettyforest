@@ -43,6 +43,20 @@ body, .pf-root { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Sego
     transform: translateY(0);
 }
 #zoom-level { font-size: 12px; color: #667568; min-width: 65px; font-weight: 500; text-align: center; }
+.tool-select {
+    padding: 4px 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1c281e;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
 
 .toolbar {
     display: flex;
@@ -97,40 +111,6 @@ body, .pf-root { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Sego
 .tool-btn.active { background: #c8e6c9; border-color: #4caf50; color: #1b5e20; }
 .tool-btn:disabled { opacity: 0.4; cursor: default; transform: none !important; box-shadow: none !important; }
 
-.spotlight-panel {
-    position: fixed;
-    top: 120px;
-    right: 20px;
-    width: 280px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-    padding: 20px;
-    display: none;
-    z-index: 500;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.spotlight-panel.visible { display: block; }
-#spotlight-close {
-    position: absolute;
-    top: 12px;
-    right: 14px;
-    border: none;
-    background: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #888;
-    transition: color 0.2s;
-}
-#spotlight-close:hover { color: #1c281e; }
-#spotlight-content { font-size: 13px; line-height: 1.8; }
-#spotlight-content strong { font-size: 15px; font-weight: 700; display: block; margin-bottom: 8px; color: #1c281e; }
-.stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.04); }
-.stat-label { color: #556256; font-weight: 400; }
-.stat-value { font-weight: 600; color: #1c281e; }
 
 .forest-container { width: 100%; flex: 1; min-height: 0; overflow: hidden; position: relative; }
 .forest-container svg { display: block; width: 100%; height: 100%; cursor: grab; transition: transform 0.15s ease; }
@@ -286,13 +266,16 @@ body, .pf-root { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Sego
 .detail-note.visible { display: block; }
 
 .model-info-panel {
-    position: fixed;
-    top: 80px;
+    position: absolute;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     width: 520px;
-    max-width: 90vw;
+    max-width: 90%;
+    max-height: 85%;
+    overflow-y: auto;
     background: rgba(255, 255, 255, 0.85);
+
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border-radius: 16px;
@@ -392,15 +375,8 @@ body.dark .tooltip {
     color: #ecf3ed;
 }
 
-body.dark .spotlight-panel {
-    background: rgba(15, 15, 28, 0.8);
-    border-color: rgba(255, 255, 255, 0.08);
-    color: #cfd8d0;
-    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.25);
-}
-body.dark #spotlight-close:hover { color: #ecf3ed; }
-body.dark #spotlight-content strong { color: #ecf3ed; }
 body.dark .stat-row { border-color: rgba(255, 255, 255, 0.05); }
+
 body.dark .stat-label { color: #9bb09e; }
 body.dark .stat-value { color: #ecf3ed; }
 
@@ -470,8 +446,8 @@ body.dark .model-desc .key { color: #ecf3ed; }
 .pf-root.dark .sample-display .chip .chip-name { color: #9bb09e; }
 .pf-root.dark .sample-display .chip .chip-val { color: #64b5f6; }
 .pf-root.dark .tooltip { background: rgba(15, 15, 28, 0.9); border-color: rgba(255, 255, 255, 0.12); color: #ecf3ed; }
-.pf-root.dark .spotlight-panel { background: rgba(15, 15, 28, 0.8); border-color: rgba(255, 255, 255, 0.08); color: #cfd8d0; box-shadow: 0 12px 50px rgba(0, 0, 0, 0.25); }
 .pf-root.dark .stat-row { border-color: rgba(255, 255, 255, 0.05); }
+
 .pf-root.dark .stat-label { color: #9bb09e; }
 .pf-root.dark .stat-value { color: #ecf3ed; }
 .pf-root.dark .detail-modal { background: rgba(10, 10, 18, 0.88); }
@@ -484,6 +460,21 @@ body.dark .model-desc .key { color: #ecf3ed; }
 .pf-root.dark .detail-sample .chip .chip-val { color: #64b5f6; }
 .pf-root.dark .detail-note { color: #ffb74d; background: rgba(255, 183, 77, 0.08); border-color: rgba(255, 183, 77, 0.15); }
 .pf-root.dark .model-info-panel { background: rgba(15, 15, 28, 0.85); border-color: rgba(255, 255, 255, 0.08); color: #cfd8d0; box-shadow: 0 15px 60px rgba(0, 0, 0, 0.3); }
+.pf-root.dark #info-panel-close:hover { color: #ecf3ed; }
+.pf-root.dark .model-info-panel strong { color: #81c784; }
+.pf-root.dark .model-desc { color: #cfd8d0; }
+.pf-root.dark .model-desc .key { color: #ecf3ed; }
+body.dark select, .pf-root.dark select {
+    background: #181826 !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color-scheme: dark;
+}
+body.dark select option, .pf-root.dark select option {
+    background: #181826;
+    color: #e0e0e0;
+}
+
 
 /* Ensure modal & node rects are visible across all notebook themes */
 .pf-root .detail-body { background: #f9fdf9; }
