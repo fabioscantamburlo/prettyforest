@@ -129,7 +129,7 @@ def _extract_boosting_meta(model: Any) -> dict | None:
     return meta if meta else None
 
 
-def _handle_output(html: str, output_path: str | Path | None) -> str | None:
+def _handle_output(html: str, output_path: str | Path | None):
     if output_path is not None:
         path = Path(output_path)
         try:
@@ -139,19 +139,58 @@ def _handle_output(html: str, output_path: str | Path | None) -> str | None:
             raise OSError(msg) from e
         return None
 
+    if _in_notebook():
+        try:
+            from prettyforest.widget import PrettyForestWidget
+
+            return PrettyForestWidget(html_content=html)
+        except ImportError:
+            try:
+                from IPython.display import HTML, display
+
+                display(HTML(html))
+                return None
+            except ImportError:
+                pass
+
+    # Not in a notebook — return raw HTML string
+    return html
+
+
+def _in_notebook() -> bool:
+    """Detect if running inside an interactive notebook environment (Jupyter, Marimo, Colab)."""
+    import sys
+
+    # Marimo check
+    if "marimo" in sys.modules:
+        try:
+            import marimo as mo
+
+            if mo.running_in_notebook():
+                return True
+        except Exception:
+            pass
+
+    # Colab check
+    if "google.colab" in sys.modules:
+        return True
+
+    # IPython / Jupyter check
     try:
         from IPython import get_ipython
 
         shell = get_ipython()
-        if shell is not None and "IPKernelApp" in shell.config:
-            from IPython.display import HTML, display
-
-            display(HTML(html))
-            return None
+        if shell is None:
+            return False
+        shell_name = shell.__class__.__name__
+        if shell_name in ("ZMQInteractiveShell", "Shell"):
+            return True
+        if hasattr(shell, "config") and "IPKernelApp" in shell.config:
+            return True
     except (ImportError, AttributeError):
         pass
 
-    return html
+    return False
 
 
 def _detect_model_name(model: Any) -> str:

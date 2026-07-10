@@ -137,10 +137,11 @@ class SceneComposer:
 
     def _compute_scene_size(self, n: int) -> tuple[int, int]:
         if n <= 1:
-            return 400, 400
-        base_w, base_h = 900, 600
-        factor = max(1.0, math.sqrt(n / 25))
-        return int(base_w * factor), int(base_h * min(factor, 2.0))
+            return 450, 450
+        base_w, base_h = 800, 620
+        factor = max(1.0, math.sqrt(n / 30))
+        scale_f = min(factor, 1.5)
+        return int(base_w * scale_f), int(base_h * scale_f)
 
     def _build_defs(
         self, ground_color: str, ground_dark: str, sky_color: str, season: str | None
@@ -325,10 +326,6 @@ class SceneComposer:
             '<text x="10" y="60" font-size="9" fill="#555">🟢 Green canopy = pure / low variance</text>'
             '<text x="10" y="74" font-size="9" fill="#555">🟡 Amber canopy = impure / high variance</text>'
             '<text x="10" y="88" font-size="9" fill="#888">Hover any tree for detailed stats</text>'
-            "</g>"
-            f'<g class="info-btn" id="svg-info-btn" transform="translate({lx + 240},{ly})" style="cursor:pointer">'
-            '<circle cx="14" cy="14" r="14" fill="rgba(255,255,255,0.9)" stroke="#aaa" stroke-width="1"/>'
-            '<text x="14" y="19" font-size="14" text-anchor="middle" fill="#555" font-weight="bold">?</text>'
             "</g>"
         )
 

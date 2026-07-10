@@ -19,8 +19,8 @@ def _():
         load_iris,
         mo,
         pl,
-        train_test_split,
         prettygrow,
+        train_test_split,
     )
 
 
@@ -31,7 +31,7 @@ def _(RandomForestClassifier, load_iris, pl, train_test_split):
         iris.data, iris.target, test_size=0.3, random_state=42
     )
 
-    model = RandomForestClassifier(n_estimators=180, max_depth=5, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
     model.fit(X_train, y_train)
     accuracy = model.score(X_test, y_test)
 
@@ -55,9 +55,9 @@ def _(accuracy, mo):
 
 
 @app.cell
-def _(X_test_pl, mo, model, prettygrow, y_test):
+def _(X_test_pl, model, prettygrow, y_test):
     html_rf = prettygrow(model, data=X_test_pl, target=y_test)
-    mo.iframe(html_rf, height="650px")
+    html_rf
     return
 
 
@@ -74,12 +74,12 @@ def _(mo):
 
 
 @app.cell
-def _(GradientBoostingClassifier, X_test_pl, iris, mo, prettygrow, y_test):
+def _(GradientBoostingClassifier, X_test_pl, iris, prettygrow, y_test):
     gbm = GradientBoostingClassifier(n_estimators=10, max_depth=3, random_state=42)
     gbm.fit(iris.data[:105], iris.target[:105])
 
     html_gbm = prettygrow(gbm, data=X_test_pl, target=y_test)
-    mo.iframe(html_gbm, height="700px")
+    html_gbm
     return
 
 
