@@ -3,7 +3,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from prettyforest.api import _in_notebook, _handle_output
 from prettyforest.widget import PrettyForestWidget, forest_widget
@@ -12,8 +11,12 @@ from prettyforest.widget import PrettyForestWidget, forest_widget
 class TestPrettyForestWidget:
     def test_widget_static_assets_exist(self):
         """Verify that the static ESM and CSS assets pointed to by the widget exist."""
-        esm_path = Path(getattr(PrettyForestWidget._esm, "_path", PrettyForestWidget._esm))
-        css_path = Path(getattr(PrettyForestWidget._css, "_path", PrettyForestWidget._css))
+        esm_path = Path(
+            getattr(PrettyForestWidget._esm, "_path", PrettyForestWidget._esm)
+        )
+        css_path = Path(
+            getattr(PrettyForestWidget._css, "_path", PrettyForestWidget._css)
+        )
         assert esm_path.exists()
         assert css_path.exists()
         assert esm_path.name == "forest.js"

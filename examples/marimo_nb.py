@@ -11,7 +11,7 @@ def _():
     from sklearn.model_selection import train_test_split
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
     import polars as pl
-    from prettyforest import prettygrow, forest_widget
+    from prettyforest import prettygrow
 
     return (
         GradientBoostingClassifier,

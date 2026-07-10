@@ -193,7 +193,6 @@ def _in_notebook() -> bool:
     return False
 
 
-
 def _detect_model_name(model: Any) -> str:
     """Return a human-readable model name."""
     name = type(model).__name__

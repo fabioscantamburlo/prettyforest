@@ -143,7 +143,6 @@ class SceneComposer:
         scale_f = min(factor, 1.5)
         return int(base_w * scale_f), int(base_h * scale_f)
 
-
     def _build_defs(
         self, ground_color: str, ground_dark: str, sky_color: str, season: str | None
     ) -> str:

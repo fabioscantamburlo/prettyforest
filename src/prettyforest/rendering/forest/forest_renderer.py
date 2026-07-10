@@ -27,7 +27,6 @@ def _get_static_js() -> str:
     return (_STATIC_DIR / "forest.js").read_text(encoding="utf-8")
 
 
-
 class ForestRenderer:
     def __init__(self):
         self._mapper = VisualMapper()
