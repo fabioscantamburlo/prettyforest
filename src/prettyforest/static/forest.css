@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f2f6f2; height: 100vh; overflow: hidden; display: flex; flex-direction: column; color: #2e3d30; }
+body, .pf-root { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f2f6f2; height: 100vh; overflow: hidden; display: flex; flex-direction: column; color: #2e3d30; }
+.pf-root { width: 100%; max-width: 1150px; margin: 0 auto; height: 100%; min-height: 580px; max-height: 82vh; position: relative; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08); }
+
 
 /* Glassmorphism base classes */
 .header {
@@ -442,3 +444,54 @@ body.dark #info-panel-close:hover { color: #ecf3ed; }
 body.dark .model-info-panel strong { color: #81c784; }
 body.dark .model-desc { color: #cfd8d0; }
 body.dark .model-desc .key { color: #ecf3ed; }
+
+/* AnyWidget .pf-root dark mode support and SVG fallback styles */
+.pf-root.dark { background: #0b0b14; color: #cfd8d0; }
+.pf-root.dark .header { background: rgba(15, 15, 28, 0.75); border-color: rgba(255, 255, 255, 0.06); }
+.pf-root.dark .header h2 { color: #ecf3ed; }
+.pf-root.dark .zoom-controls button { background: rgba(255, 255, 255, 0.08); color: #e0e0e0; border-color: rgba(255, 255, 255, 0.08); }
+.pf-root.dark .zoom-controls button:hover { background: rgba(76, 175, 80, 0.2); border-color: #66bb6a; }
+.pf-root.dark #zoom-level { color: #9bb09e; }
+.pf-root.dark .toolbar { background: rgba(15, 15, 28, 0.65); border-color: rgba(255, 255, 255, 0.05); }
+.pf-root.dark .toolbar label { color: #9bb09e; }
+.pf-root.dark .toolbar select { background: rgba(255, 255, 255, 0.08); color: #e0e0e0; border-color: rgba(255, 255, 255, 0.08); }
+.pf-root.dark #page-info { color: #ecf3ed; }
+.pf-root.dark .tool-btn { background: rgba(255, 255, 255, 0.08); color: #e0e0e0; border-color: rgba(255, 255, 255, 0.08); }
+.pf-root.dark .tool-btn:hover { background: rgba(76, 175, 80, 0.2); border-color: #66bb6a; }
+.pf-root.dark .tool-btn.active { background: rgba(76, 175, 80, 0.3); border-color: #66bb6a; color: #a5d6a7; }
+.pf-root.dark .predict-panel { background: rgba(15, 15, 28, 0.7); border-color: rgba(255, 255, 255, 0.05); }
+.pf-root.dark .predict-panel label { color: #9bb09e; }
+.pf-root.dark .predict-panel input { background: rgba(255, 255, 255, 0.08); color: #e0e0e0; border-color: rgba(255, 255, 255, 0.08); }
+.pf-root.dark #predict-result { color: #ecf3ed; }
+.pf-root.dark #predict-result strong { color: #64b5f6; }
+.pf-root.dark .sample-display { background: rgba(15, 15, 28, 0.75); border-color: rgba(255, 255, 255, 0.05); }
+.pf-root.dark .sample-display .sample-title { color: #ecf3ed; }
+.pf-root.dark .sample-display .chip { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.08); }
+.pf-root.dark .sample-display .chip .chip-name { color: #9bb09e; }
+.pf-root.dark .sample-display .chip .chip-val { color: #64b5f6; }
+.pf-root.dark .tooltip { background: rgba(15, 15, 28, 0.9); border-color: rgba(255, 255, 255, 0.12); color: #ecf3ed; }
+.pf-root.dark .spotlight-panel { background: rgba(15, 15, 28, 0.8); border-color: rgba(255, 255, 255, 0.08); color: #cfd8d0; box-shadow: 0 12px 50px rgba(0, 0, 0, 0.25); }
+.pf-root.dark .stat-row { border-color: rgba(255, 255, 255, 0.05); }
+.pf-root.dark .stat-label { color: #9bb09e; }
+.pf-root.dark .stat-value { color: #ecf3ed; }
+.pf-root.dark .detail-modal { background: rgba(10, 10, 18, 0.88); }
+.pf-root.dark .detail-header { background: rgba(15, 30, 20, 0.5); border-color: rgba(255, 255, 255, 0.05); }
+.pf-root.dark .detail-header span { color: #81c784; }
+.pf-root.dark .detail-body { background: radial-gradient(ellipse at center, rgba(15, 25, 15, 0.5) 0%, rgba(10, 10, 15, 0.5) 100%); }
+.pf-root.dark .detail-sample { background: rgba(15, 30, 20, 0.4); border-color: rgba(255, 255, 255, 0.05); }
+.pf-root.dark .detail-sample .chip { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.08); }
+.pf-root.dark .detail-sample .chip .chip-name { color: #81c784; }
+.pf-root.dark .detail-sample .chip .chip-val { color: #64b5f6; }
+.pf-root.dark .detail-note { color: #ffb74d; background: rgba(255, 183, 77, 0.08); border-color: rgba(255, 183, 77, 0.15); }
+.pf-root.dark .model-info-panel { background: rgba(15, 15, 28, 0.85); border-color: rgba(255, 255, 255, 0.08); color: #cfd8d0; box-shadow: 0 15px 60px rgba(0, 0, 0, 0.3); }
+
+/* Ensure modal & node rects are visible across all notebook themes */
+.pf-root .detail-body { background: #f9fdf9; }
+.pf-root.dark .detail-body { background: #0f1910; }
+.pf-root .detail-body svg rect.node-rect { fill: #fffde7 !important; stroke: #5D4037 !important; }
+.pf-root .detail-body svg rect.node-rect.leaf { fill: #e8f5e9 !important; stroke: #2e7d32 !important; }
+.pf-root .detail-body svg rect.node-rect.on-path { fill: #e3f2fd !important; stroke: #1565c0 !important; }
+.pf-root .detail-body svg rect.node-rect.leaf.on-path { fill: #bbdefb !important; stroke: #1565c0 !important; }
+.pf-root .detail-body svg text { fill: #333 !important; }
+.pf-root .detail-body svg line.edge-line { stroke: #8d6e63 !important; }
+.pf-root .detail-body svg line.edge-line.on-path { stroke: #1565c0 !important; }

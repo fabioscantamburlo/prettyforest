@@ -139,28 +139,59 @@ def _handle_output(html: str, output_path: str | Path | None):
             raise OSError(msg) from e
         return None
 
-    # Check if in an interactive notebook context
-    try:
-        from IPython import get_ipython
+    if _in_notebook():
+        try:
+            from prettyforest.widget import PrettyForestWidget
 
-        shell = get_ipython()
-        if shell is not None and "IPKernelApp" in shell.config:
-            # In a Jupyter/Marimo kernel — use anywidget
+            return PrettyForestWidget(html_content=html)
+        except ImportError:
             try:
-                from prettyforest.widget import PrettyForestWidget
-
-                return PrettyForestWidget(html_content=html)
-            except ImportError:
-                # anywidget not installed, fall back to display
                 from IPython.display import HTML, display
 
                 display(HTML(html))
                 return None
-    except (ImportError, AttributeError):
-        pass
+            except ImportError:
+                pass
 
     # Not in a notebook — return raw HTML string
     return html
+
+
+def _in_notebook() -> bool:
+    """Detect if running inside an interactive notebook environment (Jupyter, Marimo, Colab)."""
+    import sys
+
+    # Marimo check
+    if "marimo" in sys.modules:
+        try:
+            import marimo as mo
+
+            if mo.running_in_notebook():
+                return True
+        except Exception:
+            pass
+
+    # Colab check
+    if "google.colab" in sys.modules:
+        return True
+
+    # IPython / Jupyter check
+    try:
+        from IPython import get_ipython
+
+        shell = get_ipython()
+        if shell is None:
+            return False
+        shell_name = shell.__class__.__name__
+        if shell_name in ("ZMQInteractiveShell", "Shell"):
+            return True
+        if hasattr(shell, "config") and "IPKernelApp" in shell.config:
+            return True
+    except (ImportError, AttributeError):
+        pass
+
+    return False
+
 
 
 def _detect_model_name(model: Any) -> str:

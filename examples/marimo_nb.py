@@ -21,7 +21,6 @@ def _():
         pl,
         prettygrow,
         train_test_split,
-        forest_widget,
     )
 
 
@@ -56,9 +55,9 @@ def _(accuracy, mo):
 
 
 @app.cell
-def _(X_test_pl, model, prettygrow, forest_widget, y_test):
+def _(X_test_pl, model, prettygrow, y_test):
     html_rf = prettygrow(model, data=X_test_pl, target=y_test)
-    forest_widget(html_rf)
+    html_rf
     return
 
 
@@ -75,12 +74,12 @@ def _(mo):
 
 
 @app.cell
-def _(GradientBoostingClassifier, X_test_pl, iris, prettygrow, forest_widget, y_test):
+def _(GradientBoostingClassifier, X_test_pl, iris, prettygrow, y_test):
     gbm = GradientBoostingClassifier(n_estimators=10, max_depth=3, random_state=42)
     gbm.fit(iris.data[:105], iris.target[:105])
 
     html_gbm = prettygrow(gbm, data=X_test_pl, target=y_test)
-    forest_widget(html_gbm)
+    html_gbm
     return
 
 

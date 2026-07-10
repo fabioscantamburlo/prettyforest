@@ -41,10 +41,6 @@ dev = [
     "jupyter>=1.1.1",
     "ipykernel>=7.3.0",
 ]
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

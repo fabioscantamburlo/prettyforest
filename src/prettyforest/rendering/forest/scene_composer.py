@@ -137,10 +137,12 @@ class SceneComposer:
 
     def _compute_scene_size(self, n: int) -> tuple[int, int]:
         if n <= 1:
-            return 400, 400
-        base_w, base_h = 900, 600
-        factor = max(1.0, math.sqrt(n / 25))
-        return int(base_w * factor), int(base_h * min(factor, 2.0))
+            return 450, 450
+        base_w, base_h = 800, 620
+        factor = max(1.0, math.sqrt(n / 30))
+        scale_f = min(factor, 1.5)
+        return int(base_w * scale_f), int(base_h * scale_f)
+
 
     def _build_defs(
         self, ground_color: str, ground_dark: str, sky_color: str, season: str | None

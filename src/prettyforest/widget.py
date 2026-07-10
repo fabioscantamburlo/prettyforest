@@ -18,6 +18,8 @@ class PrettyForestWidget(anywidget.AnyWidget):
     """
 
     _esm = _STATIC / "forest.js"
+    _css = _STATIC / "forest.css"
+
 
     # The full HTML content (toolbar + SVG + scripts)
     html_content = traitlets.Unicode("").tag(sync=True)
