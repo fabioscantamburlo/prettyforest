@@ -2248,6 +2248,7 @@ dev = [
     { name = "lightgbm" },
     { name = "marimo" },
     { name = "pandas" },
+    { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -2276,6 +2277,7 @@ dev = [
     { name = "lightgbm", specifier = ">=4.6.0" },
     { name = "marimo", specifier = ">=0.23.9" },
     { name = "pandas", specifier = ">=2.0.0" },
+    { name = "pre-commit", specifier = ">=4.0.0" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
 ]
