@@ -1,6 +1,7 @@
 [project]
 name = "prettyforest"
-version = "0.2.0"
+version = "0.3.0"
+
 description = "Interactive 2.5D forest visualization for tree-based ML ensembles"
 readme = "README.md"
 license = "MIT"

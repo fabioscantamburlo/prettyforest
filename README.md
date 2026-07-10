@@ -65,7 +65,7 @@ prettygrow(
 )
 ```
 
-**Returns:** HTML string if no `output_path` and not in a notebook; `None` otherwise.
+**Returns:** Interactive `AnyWidget` instance when running inside a notebook environment (JupyterLab, Marimo, VS Code, Google Colab); raw HTML string if outside a notebook and no `output_path`; `None` if `output_path` is specified.
 
 ## Supported Models
 
@@ -81,15 +81,15 @@ prettygrow(
 
 | Action | What it does |
 |--------|-------------|
-| **Hover** a tree | Tooltip with depth, nodes, purity/magnitude |
-| **Click** a tree | Spotlight panel with full stats + rank |
-| **Double-click** a tree | Full decision structure with per-node expand |
+| **Hover** a tree | Tooltip with tree index, depth, nodes, leaves, purity/magnitude, and metric rank |
+| **Double-click** a tree | Full interactive decision structure with per-node expand |
 | **Sort by** dropdown | Rearrange into grid by depth/nodes/leaves/metric |
 | **◀ ▶** | Page through large ensembles (200/page) |
 | **🌙** | Toggle dark mode |
-| **?** | Model description + how the ensemble works |
+| **❓** | Description on how the ensemble works |
 | **Trace** | Show per-tree badges + ensemble prediction + true label |
 | **Click a truncated node** | Expand that subtree 3 more levels |
+
 
 ## Seasons & Themes
 
@@ -123,10 +123,11 @@ When you trace a sample:
 - **Ensemble prediction**: the actual `model.predict()` output — always correct
 - **True label**: shown in green if `target` was provided
 
-## Marimo Integration
+## Marimo & Jupyter Notebook Integration
+
+PrettyForest uses native **AnyWidget** support for bi-directional synchronization and interactive rendering across all notebook environments (JupyterLab, Marimo desktop/cloud, VS Code, and Google Colab).
 
 ```python
-import marimo as mo
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import load_iris
 import polars as pl
@@ -137,27 +138,14 @@ model = RandomForestClassifier(n_estimators=20, max_depth=5, random_state=42)
 model.fit(iris.data, iris.target)
 
 X_pl = pl.DataFrame({name: iris.data[:, i] for i, name in enumerate(iris.feature_names)})
-html = prettygrow(model, data=X_pl, target=iris.target)
-mo.iframe(html, height="700px")
+
+# Directly returns and displays an interactive AnyWidget inside Jupyter or Marimo
+prettygrow(model, data=X_pl, target=iris.target)
 ```
 
-Use `mo.iframe()`
-Full interactivity works: zoom, pan, click, trace, expand.
-
-
-## Jupyter Integration
-
-```python
-from prettyforest import prettygrow
-# ... train model ...
-prettygrow(model, data=X_test)  # auto-displays via IPython.display.HTML
-```
-
-## **Known issues:**
-
-In Google Colab, double-click to expand a tree doesn't work. In Marimo cloud (molab), the visualization fails to render. Both are under investigation. Locally (JupyterLab, Marimo desktop) everything works as expected.
 
 ## Understanding Boosted vs Bagged Trees
+
 
 **Random Forest (bagged):** Each tree trains independently on a random data subset. Leaves contain real class proportions or target means. Ensemble averages/votes.
 
