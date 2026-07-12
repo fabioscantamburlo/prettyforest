@@ -1,3 +1,5 @@
+[![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/fabioscantamburlo/prettyforest/blob/main/examples/marimo_nb.py/server)
+
 # 🌲 PrettyForest
 
 Interactive 2.5D forest visualization for tree-based ML ensembles. Explore your model's structure, trace predictions through individual trees, and understand how the ensemble makes decisions.
